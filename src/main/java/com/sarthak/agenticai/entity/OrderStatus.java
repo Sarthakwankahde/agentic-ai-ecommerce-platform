@@ -1,0 +1,14 @@
+package com.sarthak.agenticai.entity;
+
+public enum OrderStatus {
+
+    PENDING,
+
+    CONFIRMED,
+
+    SHIPPED,
+
+    DELIVERED,
+
+    CANCELLED
+}
