@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.sarthak</groupId>
-	<artifactId>agentic-ai-academic-assistant</artifactId>
+	<artifactId>agentic-ai-ecommerce-platform</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>

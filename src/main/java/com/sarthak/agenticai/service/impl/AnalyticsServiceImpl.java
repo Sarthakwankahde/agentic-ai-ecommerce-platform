@@ -1,5 +1,6 @@
 package com.sarthak.agenticai.service.impl;
 
+import com.sarthak.agenticai.dto.CategoryRevenueDto;
 import com.sarthak.agenticai.dto.RevenueAnalyticsDto;
 import com.sarthak.agenticai.repository.OrderRepository;
 import com.sarthak.agenticai.service.AnalyticsService;
@@ -7,14 +8,26 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.sarthak.agenticai.dto.TopSellingProductDto;
+import com.sarthak.agenticai.repository.OrderItemRepository;
+
+import java.util.List;
+import com.sarthak.agenticai.dto.MonthlySalesDto;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class AnalyticsServiceImpl implements AnalyticsService {
 
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
 
-    public AnalyticsServiceImpl(OrderRepository orderRepository) {
+    public AnalyticsServiceImpl(
+            OrderRepository orderRepository,
+            OrderItemRepository orderItemRepository) {
+
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     @Override
@@ -74,5 +87,40 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         );
 
         return response;
+    }
+    @Override
+    public List<TopSellingProductDto> getTopSellingProducts() {
+
+        return orderItemRepository.getTopSellingProducts();
+
+    }
+    @Override
+    public List<MonthlySalesDto> getMonthlySalesAnalytics() {
+
+        List<Object[]> result = orderRepository.getMonthlySalesAnalytics();
+
+        List<MonthlySalesDto> response = new ArrayList<>();
+
+        for (Object[] row : result) {
+
+            response.add(
+                    new MonthlySalesDto(
+
+                            row[0].toString().trim(),
+
+                            ((Number) row[1]).doubleValue(),
+
+                            ((Number) row[2]).longValue()
+                    )
+            );
+        }
+
+        return response;
+    }
+    @Override
+    public List<CategoryRevenueDto> getCategoryRevenue() {
+
+        return orderItemRepository.getCategoryRevenue();
+
     }
 }

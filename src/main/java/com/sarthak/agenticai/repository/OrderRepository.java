@@ -46,4 +46,16 @@ WHERE o.orderDate BETWEEN :startDate AND :endDate
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+    @Query(value = """
+SELECT
+TO_CHAR(order_date,'Month') AS month,
+COALESCE(SUM(total_amount),0) AS revenue,
+COUNT(*) AS orders
+FROM orders
+WHERE status='DELIVERED'
+GROUP BY EXTRACT(MONTH FROM order_date),
+TO_CHAR(order_date,'Month')
+ORDER BY EXTRACT(MONTH FROM order_date)
+""", nativeQuery = true)
+    List<Object[]> getMonthlySalesAnalytics();
 }
