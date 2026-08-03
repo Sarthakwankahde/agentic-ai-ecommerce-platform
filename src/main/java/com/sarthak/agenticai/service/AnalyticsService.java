@@ -1,9 +1,6 @@
 package com.sarthak.agenticai.service;
 
-import com.sarthak.agenticai.dto.CategoryRevenueDto;
-import com.sarthak.agenticai.dto.MonthlySalesDto;
-import com.sarthak.agenticai.dto.RevenueAnalyticsDto;
-import com.sarthak.agenticai.dto.TopSellingProductDto;
+import com.sarthak.agenticai.dto.*;
 
 import java.util.List;
 
@@ -13,5 +10,6 @@ public interface AnalyticsService {
     List<TopSellingProductDto> getTopSellingProducts();
     List<MonthlySalesDto> getMonthlySalesAnalytics();
     List<CategoryRevenueDto> getCategoryRevenue();
+    InventoryAnalyticsDto getInventoryAnalytics();
 
 }

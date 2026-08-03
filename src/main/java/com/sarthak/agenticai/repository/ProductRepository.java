@@ -29,4 +29,24 @@ public interface ProductRepository
        FROM Product p
        """)
     List<ProductSummaryDto> getProductSummaryDto();
+    @Query("""
+SELECT p
+FROM Product p
+WHERE p.quantity <= 5
+ORDER BY p.quantity ASC
+""")
+    List<Product> getLowStockProducts();
+
+    @Query("""
+SELECT p
+FROM Product p
+WHERE p.quantity = 0
+""")
+    List<Product> getOutOfStockProducts();
+
+    @Query("""
+SELECT COALESCE(SUM(p.price * p.quantity),0)
+FROM Product p
+""")
+    Double getInventoryValue();
 }

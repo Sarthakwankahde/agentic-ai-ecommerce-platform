@@ -15,21 +15,24 @@ import java.util.List;
 import com.sarthak.agenticai.dto.MonthlySalesDto;
 import java.util.ArrayList;
 import java.util.List;
+import com.sarthak.agenticai.dto.InventoryAnalyticsDto;
+import com.sarthak.agenticai.repository.ProductRepository;
 
 @Service
 public class AnalyticsServiceImpl implements AnalyticsService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ProductRepository productRepository;
 
-    public AnalyticsServiceImpl(
-            OrderRepository orderRepository,
-            OrderItemRepository orderItemRepository) {
+    public AnalyticsServiceImpl(OrderRepository orderRepository,
+                                OrderItemRepository orderItemRepository,
+                                ProductRepository productRepository) {
 
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.productRepository = productRepository;
     }
-
     @Override
     public RevenueAnalyticsDto getRevenueAnalytics() {
 
@@ -122,5 +125,24 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         return orderItemRepository.getCategoryRevenue();
 
+    }
+    @Override
+    public InventoryAnalyticsDto getInventoryAnalytics() {
+
+        InventoryAnalyticsDto response = new InventoryAnalyticsDto();
+
+        response.setInventoryValue(
+                productRepository.getInventoryValue()
+        );
+
+        response.setLowStockProducts(
+                (long) productRepository.getLowStockProducts().size()
+        );
+
+        response.setOutOfStockProducts(
+                (long) productRepository.getOutOfStockProducts().size()
+        );
+
+        return response;
     }
 }

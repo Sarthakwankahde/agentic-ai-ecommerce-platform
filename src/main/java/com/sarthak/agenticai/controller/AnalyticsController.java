@@ -1,12 +1,10 @@
 package com.sarthak.agenticai.controller;
 
-import com.sarthak.agenticai.dto.CategoryRevenueDto;
-import com.sarthak.agenticai.dto.MonthlySalesDto;
-import com.sarthak.agenticai.dto.RevenueAnalyticsDto;
+import com.sarthak.agenticai.dto.*;
 import com.sarthak.agenticai.service.AnalyticsService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.sarthak.agenticai.dto.TopSellingProductDto;
+
 import java.util.List;
 
 @RestController
@@ -45,6 +43,13 @@ public class AnalyticsController {
     public List<CategoryRevenueDto> getCategoryRevenue() {
 
         return analyticsService.getCategoryRevenue();
+
+    }
+    @GetMapping("/inventory")
+    @PreAuthorize("hasRole('ADMIN')")
+    public InventoryAnalyticsDto getInventoryAnalytics() {
+
+        return analyticsService.getInventoryAnalytics();
 
     }
 }
