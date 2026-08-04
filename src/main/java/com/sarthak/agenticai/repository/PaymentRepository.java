@@ -4,6 +4,7 @@ import com.sarthak.agenticai.entity.Order;
 import com.sarthak.agenticai.entity.Payment;
 import com.sarthak.agenticai.entity.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
@@ -20,5 +21,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             String razorpayPaymentId
     );
     long countByStatus(PaymentStatus status);
+    @Query("""
+SELECT COALESCE(SUM(p.amount),0)
+FROM Payment p
+WHERE p.status = com.sarthak.agenticai.entity.PaymentStatus.SUCCESS
+""")
+    Double getTotalSuccessfulPaymentAmount();
 
 }

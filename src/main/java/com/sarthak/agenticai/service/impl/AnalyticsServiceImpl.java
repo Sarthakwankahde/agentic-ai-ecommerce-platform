@@ -1,21 +1,20 @@
 package com.sarthak.agenticai.service.impl;
 
-import com.sarthak.agenticai.dto.CategoryRevenueDto;
-import com.sarthak.agenticai.dto.RevenueAnalyticsDto;
+import com.sarthak.agenticai.dto.*;
 import com.sarthak.agenticai.repository.OrderRepository;
+import com.sarthak.agenticai.repository.UserRepository;
 import com.sarthak.agenticai.service.AnalyticsService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import com.sarthak.agenticai.dto.TopSellingProductDto;
+
 import com.sarthak.agenticai.repository.OrderItemRepository;
 
 import java.util.List;
-import com.sarthak.agenticai.dto.MonthlySalesDto;
 import java.util.ArrayList;
 import java.util.List;
-import com.sarthak.agenticai.dto.InventoryAnalyticsDto;
+
 import com.sarthak.agenticai.repository.ProductRepository;
 
 @Service
@@ -24,14 +23,16 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
-
+    private final UserRepository userRepository;
     public AnalyticsServiceImpl(OrderRepository orderRepository,
                                 OrderItemRepository orderItemRepository,
-                                ProductRepository productRepository) {
+                                ProductRepository productRepository,
+                                UserRepository userRepository) {
 
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
     }
     @Override
     public RevenueAnalyticsDto getRevenueAnalytics() {
@@ -144,5 +145,40 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         );
 
         return response;
+    }
+    @Override
+    public List<BestCustomerDto> getBestCustomers() {
+
+        return orderRepository.getBestCustomers();
+
+    }
+    @Override
+    public List<RecentOrderDto> getRecentOrders() {
+
+        List<RecentOrderDto> orders = orderRepository.getRecentOrders();
+
+        if (orders.size() > 10) {
+            return orders.subList(0, 10);
+        }
+
+        return orders;
+    }
+    @Override
+    public List<SalesTrendDto> getSalesTrend() {
+
+        return orderRepository.getSalesTrend();
+
+    }
+    @Override
+    public List<OrderStatusAnalyticsDto> getOrderStatusAnalytics() {
+
+        return orderRepository.getOrderStatusAnalytics();
+
+    }
+    @Override
+    public List<CustomerGrowthDto> getCustomerGrowthAnalytics() {
+
+        return userRepository.getCustomerGrowthAnalytics();
+
     }
 }

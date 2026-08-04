@@ -52,4 +52,39 @@ public class AnalyticsController {
         return analyticsService.getInventoryAnalytics();
 
     }
+    @GetMapping("/best-customers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<BestCustomerDto> getBestCustomers() {
+
+        return analyticsService.getBestCustomers();
+
+    }
+    @GetMapping("/recent-orders")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<RecentOrderDto> getRecentOrders() {
+
+        return analyticsService.getRecentOrders();
+
+    }
+    @GetMapping("/sales-trend")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<SalesTrendDto> getSalesTrend() {
+
+        return analyticsService.getSalesTrend();
+
+    }
+    @GetMapping("/order-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<OrderStatusAnalyticsDto> getOrderStatusAnalytics() {
+
+        return analyticsService.getOrderStatusAnalytics();
+
+    }
+    @GetMapping("/customer-growth")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<CustomerGrowthDto> getCustomerGrowthAnalytics() {
+
+        return analyticsService.getCustomerGrowthAnalytics();
+
+    }
 }

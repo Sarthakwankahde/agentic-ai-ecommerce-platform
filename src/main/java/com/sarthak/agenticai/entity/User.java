@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
+import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "users")
@@ -33,8 +35,15 @@ public class User {
     }
 
 
+
     public User() {
     }
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+    }
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     public User(Long id, String fullName, String email, String password) {
         this.id = id;
@@ -73,5 +82,12 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

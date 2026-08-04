@@ -11,5 +11,10 @@ public interface AnalyticsService {
     List<MonthlySalesDto> getMonthlySalesAnalytics();
     List<CategoryRevenueDto> getCategoryRevenue();
     InventoryAnalyticsDto getInventoryAnalytics();
+    List<BestCustomerDto> getBestCustomers();
+    List<RecentOrderDto> getRecentOrders();
+    List<SalesTrendDto> getSalesTrend();
+    List<OrderStatusAnalyticsDto> getOrderStatusAnalytics();
+    List<CustomerGrowthDto> getCustomerGrowthAnalytics();
 
 }

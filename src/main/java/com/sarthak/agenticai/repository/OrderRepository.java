@@ -1,5 +1,9 @@
 package com.sarthak.agenticai.repository;
 
+import com.sarthak.agenticai.dto.BestCustomerDto;
+import com.sarthak.agenticai.dto.OrderStatusAnalyticsDto;
+import com.sarthak.agenticai.dto.RecentOrderDto;
+import com.sarthak.agenticai.dto.SalesTrendDto;
 import com.sarthak.agenticai.entity.Order;
 import com.sarthak.agenticai.entity.OrderStatus;
 import com.sarthak.agenticai.entity.User;
@@ -58,4 +62,54 @@ TO_CHAR(order_date,'Month')
 ORDER BY EXTRACT(MONTH FROM order_date)
 """, nativeQuery = true)
     List<Object[]> getMonthlySalesAnalytics();
+   @Query("""
+SELECT new com.sarthak.agenticai.dto.BestCustomerDto(
+    u.id,
+    u.fullName,
+    u.email,
+    COUNT(o),
+    SUM(o.totalAmount)
+)
+FROM Order o
+JOIN o.user u
+WHERE o.status = com.sarthak.agenticai.entity.OrderStatus.DELIVERED
+GROUP BY u.id, u.fullName, u.email
+ORDER BY SUM(o.totalAmount) DESC
+""")
+   List<BestCustomerDto> getBestCustomers();
+    @Query("""
+SELECT new com.sarthak.agenticai.dto.RecentOrderDto(
+    o.id,
+    o.user.fullName,
+    o.totalAmount,
+    o.status,
+    o.orderDate
+)
+FROM Order o
+ORDER BY o.orderDate DESC
+""")
+    List<RecentOrderDto> getRecentOrders();
+    @Query("""
+SELECT new com.sarthak.agenticai.dto.SalesTrendDto(
+    FUNCTION('TO_CHAR', o.orderDate, 'Mon'),
+    SUM(o.totalAmount)
+)
+FROM Order o
+WHERE o.status = com.sarthak.agenticai.entity.OrderStatus.DELIVERED
+GROUP BY FUNCTION('TO_CHAR', o.orderDate, 'Mon'),
+         FUNCTION('MONTH', o.orderDate)
+ORDER BY FUNCTION('MONTH', o.orderDate)
+""")
+    List<SalesTrendDto> getSalesTrend();
+    @Query("""
+SELECT new com.sarthak.agenticai.dto.OrderStatusAnalyticsDto(
+    o.status,
+    COUNT(o)
+)
+FROM Order o
+GROUP BY o.status
+ORDER BY o.status
+""")
+    List<OrderStatusAnalyticsDto> getOrderStatusAnalytics();
+
 }
