@@ -5,12 +5,9 @@ public class CustomerGrowthDto {
     private String month;
 
     private Long totalCustomers;
-
-
-    public CustomerGrowthDto(String month, Number totalCustomers) {
-
+    public CustomerGrowthDto(String month, Long totalCustomers) {
         this.month = month;
-        this.totalCustomers = totalCustomers.longValue();
+        this.totalCustomers = totalCustomers;
     }
 
 

@@ -14,13 +14,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long count();
     @Query("""
 SELECT new com.sarthak.agenticai.dto.CustomerGrowthDto(
-    FUNCTION('TO_CHAR', u.createdAt, 'Mon'),
-    COUNT(u.id)
+    'Test',
+    COUNT(u)
 )
 FROM User u
-GROUP BY FUNCTION('TO_CHAR', u.createdAt, 'Mon'),
-         FUNCTION('MONTH', u.createdAt)
-ORDER BY FUNCTION('MONTH', u.createdAt)
 """)
-    List<CustomerGrowthDto> getCustomerGrowthAnalytics();
-}
+    List<CustomerGrowthDto> getCustomerGrowthAnalytics();}

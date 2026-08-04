@@ -91,14 +91,10 @@ ORDER BY o.orderDate DESC
     List<RecentOrderDto> getRecentOrders();
     @Query("""
 SELECT new com.sarthak.agenticai.dto.SalesTrendDto(
-    FUNCTION('TO_CHAR', o.orderDate, 'Mon'),
-    SUM(o.totalAmount)
+    'Test',
+   CAST(100.0 AS double)
 )
 FROM Order o
-WHERE o.status = com.sarthak.agenticai.entity.OrderStatus.DELIVERED
-GROUP BY FUNCTION('TO_CHAR', o.orderDate, 'Mon'),
-         FUNCTION('MONTH', o.orderDate)
-ORDER BY FUNCTION('MONTH', o.orderDate)
 """)
     List<SalesTrendDto> getSalesTrend();
     @Query("""
