@@ -5,7 +5,9 @@ import com.sarthak.agenticai.entity.Payment;
 import com.sarthak.agenticai.entity.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import com.sarthak.agenticai.entity.User;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -21,6 +23,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             String razorpayPaymentId
     );
     long countByStatus(PaymentStatus status);
+    List<Payment> findByOrder_User(User user);
+
+    Optional<Payment> findByOrder_IdAndOrder_User(
+            Long orderId,
+            User user
+    );
     @Query("""
 SELECT COALESCE(SUM(p.amount),0)
 FROM Payment p

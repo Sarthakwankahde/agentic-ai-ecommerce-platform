@@ -13,6 +13,8 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import com.razorpay.Utils;
 
+import java.util.List;
+
 @Service
 public class PaymentServiceImpl implements PaymentService {
 
@@ -128,6 +130,57 @@ public class PaymentServiceImpl implements PaymentService {
         order.setStatus(OrderStatus.CONFIRMED);
 
         orderRepository.save(order);
+
+        return new PaymentResponseDto(
+
+                payment.getId(),
+
+                payment.getRazorpayOrderId(),
+
+                payment.getAmount(),
+
+                payment.getStatus().name()
+
+        );
+    }
+    @Override
+    public List<PaymentResponseDto> getMyPayments(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+
+        return paymentRepository.findByOrder_User(user)
+                .stream()
+                .map(payment ->
+
+                        new PaymentResponseDto(
+
+                                payment.getId(),
+
+                                payment.getRazorpayOrderId(),
+
+                                payment.getAmount(),
+
+                                payment.getStatus().name()
+
+                        )
+                )
+                .toList();
+    }
+    @Override
+    public PaymentResponseDto getPaymentByOrderId(
+            String email,
+            Long orderId) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+
+        Payment payment = paymentRepository
+                .findByOrder_IdAndOrder_User(orderId, user)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Payment not found"));
 
         return new PaymentResponseDto(
 
