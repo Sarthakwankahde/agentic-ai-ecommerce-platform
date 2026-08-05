@@ -11,6 +11,7 @@ import com.sarthak.agenticai.exception.ResourceNotFoundException;
 import com.sarthak.agenticai.exception.UserAlreadyExistsException;
 import com.sarthak.agenticai.repository.UserRepository;
 import com.sarthak.agenticai.security.JwtService;
+import com.sarthak.agenticai.service.EmailService;
 import com.sarthak.agenticai.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,13 +24,19 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
-    public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public UserServiceImpl(
+            UserRepository repository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            EmailService emailService) {
+
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.emailService = emailService;
     }
-
     @Override
     public String registerUser(UserRequestDto request) {
 
@@ -45,7 +52,24 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
-        repository.save(user);
+
+        User savedUser = repository.save(user);
+
+        emailService.sendEmail(
+                savedUser.getEmail(),
+                "Welcome to Agentic AI E-Commerce",
+                """
+                Hi %s,
+    
+                Welcome to Agentic AI E-Commerce Platform!
+    
+                Your account has been created successfully.
+    
+                Happy Shopping!
+    
+                Team Agentic AI
+                """.formatted(savedUser.getFullName())
+        );
 
         return "User Registered Successfully";
     }
@@ -87,5 +111,6 @@ public class UserServiceImpl implements UserService {
         repository.save(user);
         return "Password changed successfully";
     }
+
 
 }
