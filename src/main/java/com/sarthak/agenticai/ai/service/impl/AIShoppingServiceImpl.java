@@ -7,12 +7,15 @@
     import com.sarthak.agenticai.service.PaymentService;
     import com.sarthak.agenticai.service.ProductService;
     import org.springframework.ai.chat.client.ChatClient;
+    import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+    import org.springframework.ai.chat.memory.ChatMemory;
     import org.springframework.stereotype.Service;
     import com.sarthak.agenticai.ai.tool.ProductTool;
     import com.sarthak.agenticai.ai.tool.OrderTool;
     import com.sarthak.agenticai.ai.tool.CartTool;
     import com.sarthak.agenticai.ai.tool.PaymentTool;
     import com.sarthak.agenticai.ai.tool.AnalyticsTool;
+    import reactor.core.scheduler.Schedulers;
 
     @Service
     public class AIShoppingServiceImpl implements AIShoppingService {
@@ -28,17 +31,30 @@
 
         private final AnalyticsTool analyticsTool;
 
+        private final ChatMemory chatMemory;
+
         public AIShoppingServiceImpl(
                 ChatClient.Builder builder,
                 ProductTool productTool,
+                ChatMemory chatMemory,
                 OrderTool orderTool,
                 CartTool cartTool,
                 PaymentTool paymentTool,
                 AnalyticsTool analyticsTool
         ) {
 
-            this.chatClient = builder.build();
+            /*this.chatClient = builder.build();*/
             this.productTool = productTool;
+            this.chatMemory = chatMemory;
+            this.chatClient = builder
+                    .defaultAdvisors(
+                            MessageChatMemoryAdvisor.builder(chatMemory)
+                                    .conversationId("default")
+                                    .order(20)
+                                    .scheduler(Schedulers.boundedElastic())
+                                    .build()
+                    )
+                    .build();
             this.orderTool = orderTool;
             this.cartTool = cartTool;
             this.paymentTool = paymentTool;
@@ -92,7 +108,7 @@
                     || lowerMessage.contains("history")
                     || lowerMessage.contains("status")) {
 
-                String orderInfo = orderTool.getOrders(email);
+                String orderInfo = orderTool.getMyOrders(email);
 
                 String prompt = """
                 You are an AI Order Assistant.
@@ -158,7 +174,12 @@
             // -------------------------------
             // Default
             // -------------------------------
-            return chatClient.prompt(message)
+            return chatClient
+                    .prompt(message)
+                    .advisors(a -> a.param(
+                            ChatMemory.CONVERSATION_ID,
+                            email
+                    ))
                     .call()
                     .content();
         }    }
