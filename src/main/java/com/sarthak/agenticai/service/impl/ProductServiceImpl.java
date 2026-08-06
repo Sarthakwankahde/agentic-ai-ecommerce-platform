@@ -306,4 +306,63 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.getProductSummaryDto();
 
     }
+    @Override
+    public List<ProductResponseDto> getRecommendedProducts() {
+
+        return productRepository
+                .findTop10ByOrderByQuantityDesc()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    @Override
+    public List<ProductResponseDto> getTopCheapProducts() {
+
+        return productRepository
+                .findTop10ByOrderByPriceAsc()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    @Override
+    public List<ProductResponseDto> getTopExpensiveProducts() {
+
+        return productRepository
+                .findTop10ByOrderByPriceDesc()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    @Override
+    public List<ProductResponseDto> getAvailableProducts() {
+
+        return productRepository
+                .findByQuantityGreaterThan(0)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    @Override
+    public List<ProductResponseDto> getProductsByCategoryName(String categoryName) {
+
+        return productRepository
+                .findByCategory_NameIgnoreCase(categoryName)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    private ProductResponseDto mapToResponse(Product product) {
+
+        ProductResponseDto response = new ProductResponseDto();
+
+        response.setId(product.getId());
+        response.setName(product.getName());
+        response.setDescription(product.getDescription());
+        response.setPrice(product.getPrice());
+        response.setQuantity(product.getQuantity());
+        response.setImageUrl(product.getImageUrl());
+        response.setCategoryName(product.getCategory().getName());
+
+        return response;
+    }
 }

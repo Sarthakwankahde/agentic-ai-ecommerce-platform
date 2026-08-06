@@ -49,4 +49,17 @@ SELECT COALESCE(SUM(p.price * p.quantity),0)
 FROM Product p
 """)
     Double getInventoryValue();
+    // =========================
+// AI Recommendation Queries
+// =========================
+
+    List<Product> findTop10ByOrderByQuantityDesc();
+
+    List<Product> findTop10ByOrderByPriceAsc();
+
+    List<Product> findTop10ByOrderByPriceDesc();
+
+    List<Product> findByQuantityGreaterThan(Integer quantity);
+
+    List<Product> findByCategory_NameIgnoreCase(String categoryName);
 }

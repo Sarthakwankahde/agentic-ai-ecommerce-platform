@@ -49,5 +49,14 @@
         );
         List<ProductSummary> getProductSummary();
         List<ProductSummaryDto> getProductSummaryDto();
+        List<ProductResponseDto> getRecommendedProducts();
+
+        List<ProductResponseDto> getTopCheapProducts();
+
+        List<ProductResponseDto> getTopExpensiveProducts();
+
+        List<ProductResponseDto> getAvailableProducts();
+
+        List<ProductResponseDto> getProductsByCategoryName(String categoryName);
 
     }

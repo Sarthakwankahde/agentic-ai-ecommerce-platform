@@ -8,225 +8,157 @@
     import com.sarthak.agenticai.service.ProductService;
     import org.springframework.ai.chat.client.ChatClient;
     import org.springframework.stereotype.Service;
+    import com.sarthak.agenticai.ai.tool.ProductTool;
+    import com.sarthak.agenticai.ai.tool.OrderTool;
+    import com.sarthak.agenticai.ai.tool.CartTool;
+    import com.sarthak.agenticai.ai.tool.PaymentTool;
+    import com.sarthak.agenticai.ai.tool.AnalyticsTool;
 
     @Service
     public class AIShoppingServiceImpl implements AIShoppingService {
 
         private final ChatClient chatClient;
+        private final ProductTool productTool;
 
-        private final ProductService productService;
+        private final OrderTool orderTool;
 
-        private final OrderService orderService;
+        private final CartTool cartTool;
 
-        private final AnalyticsService analyticsService;
+        private final PaymentTool paymentTool;
 
-        private final PaymentService paymentService;
+        private final AnalyticsTool analyticsTool;
 
         public AIShoppingServiceImpl(
                 ChatClient.Builder builder,
-                ProductService productService,
-                OrderService orderService,
-                AnalyticsService analyticsService,
-                PaymentService paymentService
+                ProductTool productTool,
+                OrderTool orderTool,
+                CartTool cartTool,
+                PaymentTool paymentTool,
+                AnalyticsTool analyticsTool
         ) {
 
             this.chatClient = builder.build();
-
-            this.productService = productService;
-
-            this.orderService = orderService;
-
-            this.analyticsService = analyticsService;
-
-            this.paymentService = paymentService;
+            this.productTool = productTool;
+            this.orderTool = orderTool;
+            this.cartTool = cartTool;
+            this.paymentTool = paymentTool;
+            this.analyticsTool = analyticsTool;
         }
         @Override
         public String ask(String email, String message) {
 
             String lowerMessage = message.toLowerCase();
 
+            // -------------------------------
             // Product Questions
+            // -------------------------------
             if (lowerMessage.contains("product")
-                        || lowerMessage.contains("laptop")
-                        || lowerMessage.contains("phone")
-                        || lowerMessage.contains("mobile")
-                        || lowerMessage.contains("electronics")
-                        || lowerMessage.contains("computer")
-                        || lowerMessage.contains("headphone")
-                        || lowerMessage.contains("watch")
-                        || lowerMessage.contains("shoe")){
-                    var products = productService.getAllProducts(
-                            0,
-                            10,
-                            "id",
-                            "asc"
-                    );
+                    || lowerMessage.contains("laptop")
+                    || lowerMessage.contains("phone")
+                    || lowerMessage.contains("mobile")
+                    || lowerMessage.contains("electronics")
+                    || lowerMessage.contains("computer")
+                    || lowerMessage.contains("headphone")
+                    || lowerMessage.contains("watch")
+                    || lowerMessage.contains("shoe")) {
 
-                    StringBuilder prompt = new StringBuilder();
-
-                    prompt.append("""
-    You are an expert AI shopping assistant.
-                            
-    Answer ONLY using the products listed below.
-                            
-   If the requested product is not available, politely say so.
-                            
-    Recommend products based on price, stock, category and description.
-    
-    These are the products available:
-    
-    """);
-                int index = 1;
-
-                for (ProductResponseDto product : products.getContent()) {
-
-                    prompt.append("""
-Product %d
-Name : %s
-Category : %s
-Price : ₹%s
-Stock : %s units
-Description : %s
-
-"""
-                            .formatted(
-                                    index++,
-                                    product.getName(),
-                                    product.getCategoryName(),
-                                    product.getPrice(),
-                                    product.getQuantity(),
-                                    product.getDescription()
-                            ));
-                }
-
-
-                    prompt.append("""
-    
-    User Question:
-    
-    """);
-
-                    prompt.append(message);
-
-                    return chatClient
-                            .prompt(prompt.toString())
-                            .call()
-                            .content();
-                }
-
-
-
-            // Order Questions
-
-            if (lowerMessage.contains("order")) {
-
-                var orders = orderService.getMyOrders(email);
-
-                if (orders.isEmpty()) {
-                    return "You don't have any orders yet.";
-                }
-
-                StringBuilder prompt = new StringBuilder();
-
-                prompt.append("""
-You are an AI Order Assistant.
-
-Use ONLY the order information below.
-
-Do not invent any information.
-
-Customer Orders:
-
-""");
-
-                int index = 1;
-
-                for (var order : orders) {
-
-                    prompt.append("""
-Order %d
-
-Order ID : %d
-Status : %s
-Amount : ₹%s
-Order Date : %s
-
-"""
-                            .formatted(
-                                    index++,
-                                    order.getOrderId(),
-                                    order.getStatus(),
-                                    order.getTotalAmount(),
-                                    order.getOrderDate()
-                            ));
-                }
-
-                prompt.append("""
-
-Customer Question:
-
-""");
-
-                prompt.append(message);
-
-                return chatClient
-                        .prompt(prompt.toString())
-                        .call()
-                        .content();
-            }
-
-            // Revenue Questions
-            if (lowerMessage.contains("revenue")
-                    || lowerMessage.contains("sales")) {
-
-                var revenue = analyticsService.getRevenueAnalytics();
+                String productInfo = productTool.getAllProducts();
 
                 String prompt = """
-            You are an AI Business Analyst.
+                You are an expert AI Shopping Assistant.
 
-            Revenue Details
+                Answer ONLY using the product information below.
 
-            Total Revenue : ₹%s
+                If a product is unavailable, politely inform the user.
 
-            Today Revenue : ₹%s
+                Available Products:
 
-            Monthly Revenue : ₹%s
+                %s
 
-            Yearly Revenue : ₹%s
+                Customer Question:
+                %s
+                """.formatted(productInfo, message);
 
-            Explain this in simple English.
-            """
-                        .formatted(
-                                revenue.getTotalRevenue(),
-                                revenue.getTodayRevenue(),
-                                revenue.getMonthlyRevenue(),
-                                revenue.getYearlyRevenue()
-                        );
-
-                return chatClient
-                        .prompt(prompt)
+                return chatClient.prompt(prompt)
                         .call()
                         .content();
             }
 
-            // Payment Questions
-            if (lowerMessage.contains("payment")) {
+            // -------------------------------
+            // Order Questions
+            // -------------------------------
+            if (lowerMessage.contains("order")
+                    || lowerMessage.contains("track")
+                    || lowerMessage.contains("history")
+                    || lowerMessage.contains("status")) {
 
-                return """
-            Payment features available:
+                String orderInfo = orderTool.getOrders(email);
 
-            • Create Payment
-            • Verify Payment
-            • Razorpay Integration
+                String prompt = """
+                You are an AI Order Assistant.
 
-            User-specific payment queries will be connected after authentication integration.
-            """;
+                Answer ONLY using the order information below.
+
+                %s
+
+                Customer Question:
+                %s
+                """.formatted(orderInfo, message);
+
+                return chatClient.prompt(prompt)
+                        .call()
+                        .content();
             }
 
-            // Default → GPT
-            return chatClient
-                    .prompt(message)
+            // -------------------------------
+            // Revenue / Analytics Questions
+            // -------------------------------
+            if (lowerMessage.contains("revenue")
+                    || lowerMessage.contains("sales")
+                    || lowerMessage.contains("analytics")) {
+
+                String analytics = analyticsTool.getRevenueAnalytics();
+
+                String prompt = """
+                You are an AI Business Analyst.
+
+                Explain the following business analytics in simple English.
+
+                %s
+                """.formatted(analytics);
+
+                return chatClient.prompt(prompt)
+                        .call()
+                        .content();
+            }
+
+            // -------------------------------
+            // Payment Questions
+            // -------------------------------
+            if (lowerMessage.contains("payment")) {
+
+                String paymentInfo = paymentTool.getPaymentSummary();
+
+                String prompt = """
+                You are an AI Payment Assistant.
+
+                Explain the payment information below.
+
+                %s
+
+                Customer Question:
+                %s
+                """.formatted(paymentInfo, message);
+
+                return chatClient.prompt(prompt)
+                        .call()
+                        .content();
+            }
+
+            // -------------------------------
+            // Default
+            // -------------------------------
+            return chatClient.prompt(message)
                     .call()
                     .content();
-        }
-    }
+        }    }
