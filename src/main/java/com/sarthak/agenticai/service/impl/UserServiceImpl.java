@@ -111,6 +111,21 @@ public class UserServiceImpl implements UserService {
         repository.save(user);
         return "Password changed successfully";
     }
+    @Override
+    public ProfileResponseDto getProfile(String email) {
+
+        User user = repository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+
+        return new ProfileResponseDto(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+    }
+
 
 
 }

@@ -3,6 +3,7 @@ package com.sarthak.agenticai.ai.tool;
 import com.sarthak.agenticai.dto.OrderResponseDto;
 import com.sarthak.agenticai.service.OrderService;
 import org.springframework.stereotype.Component;
+import org.springframework.ai.tool.annotation.Tool;
 
 import java.util.List;
 
@@ -14,23 +15,25 @@ public class OrderTool {
     public OrderTool(OrderService orderService) {
         this.orderService = orderService;
     }
-
+    @Tool(description = "Returns all orders placed by the current customer")
     public String getMyOrders(String email) {
 
         return buildOrderResponse(
                 orderService.getMyOrders(email)
         );
     }
-
-    public String getOrderById(Long orderId, String email) {
+    @Tool(description = "Returns complete details of an order using the order ID")
+    public String getOrderById(String email,
+                               Long orderId) {
 
         OrderResponseDto order =
                 orderService.getOrderById(orderId, email);
 
         return buildOrderResponse(List.of(order));
     }
-
-    public String cancelOrder(Long orderId, String email) {
+    @Tool(description = "Cancels an existing order using its order ID")
+    public String cancelOrder(String email,
+                              Long orderId) {
 
         orderService.cancelOrder(orderId, email);
 

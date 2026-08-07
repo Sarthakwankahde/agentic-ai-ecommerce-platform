@@ -2,6 +2,7 @@ package com.sarthak.agenticai.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.ai.tool.annotation.Tool;
 
 public class CartRequestDto {
 

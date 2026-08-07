@@ -153,7 +153,7 @@
             // -------------------------------
             if (lowerMessage.contains("payment")) {
 
-                String paymentInfo = paymentTool.getPaymentSummary();
+                String paymentInfo = paymentTool.getMyPayments(email);
 
                 String prompt = """
                 You are an AI Payment Assistant.

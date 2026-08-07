@@ -3,6 +3,7 @@ package com.sarthak.agenticai.ai.tool;
 import com.sarthak.agenticai.dto.CartRequestDto;
 import com.sarthak.agenticai.dto.CartResponseDto;
 import com.sarthak.agenticai.service.CartService;
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class CartTool {
         this.cartService = cartService;
     }
 
+    @Tool(description = "Returns all products currently present in the customer's shopping cart.")
     public String getCart(String email) {
 
         return buildCartResponse(
@@ -23,6 +25,7 @@ public class CartTool {
         );
     }
 
+    @Tool(description = "Adds a product to the customer's shopping cart.")
     public String addToCart(
             String email,
             Long productId,
@@ -39,6 +42,7 @@ public class CartTool {
         return buildCartResponse(List.of(cart));
     }
 
+    @Tool(description = "Updates the quantity of an existing product in the customer's shopping cart.")
     public String updateCartItem(
             String email,
             Long cartItemId,
@@ -54,6 +58,7 @@ public class CartTool {
         return buildCartResponse(List.of(cart));
     }
 
+    @Tool(description = "Removes a specific product from the customer's shopping cart.")
     public String removeCartItem(
             String email,
             Long cartItemId) {
@@ -63,6 +68,7 @@ public class CartTool {
         return "Cart item removed successfully.";
     }
 
+    @Tool(description = "Removes every product from the customer's shopping cart.")
     public String clearCart(String email) {
 
         cartService.clearCart(email);
@@ -80,24 +86,37 @@ public class CartTool {
 
         int index = 1;
 
+        double grandTotal = 0;
+        int totalItems = 0;
+
         for (CartResponseDto cart : carts) {
 
             response.append("""
-Cart Item %d
-
-Product : %s
-Price : ₹%s
-Quantity : %d
-Total : ₹%s
-
-""".formatted(
+                    
+                    Cart Item %d
+                    
+                    Product : %s
+                    Price : ₹%s
+                    Quantity : %d
+                    Total : ₹%s
+                    
+                    """.formatted(
                     index++,
                     cart.getProductName(),
                     cart.getPrice(),
                     cart.getQuantity(),
                     cart.getTotalPrice()
             ));
+
+            grandTotal += cart.getTotalPrice();
+            totalItems += cart.getQuantity();
         }
+
+        response.append("""
+                ------------------------------
+                Total Items : %d
+                Grand Total : ₹%s
+                """.formatted(totalItems, grandTotal));
 
         return response.toString();
     }
