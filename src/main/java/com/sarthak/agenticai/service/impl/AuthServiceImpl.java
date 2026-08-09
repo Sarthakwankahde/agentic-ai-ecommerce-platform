@@ -1,13 +1,17 @@
 package com.sarthak.agenticai.service.impl;
 
+import com.sarthak.agenticai.config.AppProperties;
 import com.sarthak.agenticai.dto.*;
 import com.sarthak.agenticai.entity.RefreshToken;
 import com.sarthak.agenticai.entity.User;
 import com.sarthak.agenticai.exception.InvalidCredentialsException;
 import com.sarthak.agenticai.exception.ResourceNotFoundException;
+import com.sarthak.agenticai.exception.TooManyRequestsException;
 import com.sarthak.agenticai.repository.PasswordResetTokenRepository;
 import com.sarthak.agenticai.repository.UserRepository;
 import com.sarthak.agenticai.security.JwtService;
+import com.sarthak.agenticai.security.PasswordResetRateLimiter;
+import com.sarthak.agenticai.security.PasswordResetTokenUtil;
 import com.sarthak.agenticai.service.AuthService;
 import com.sarthak.agenticai.service.EmailService;
 import com.sarthak.agenticai.service.RefreshTokenService;
@@ -17,6 +21,7 @@ import com.sarthak.agenticai.entity.PasswordResetToken;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
 
@@ -29,12 +34,18 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
+    private final PasswordResetRateLimiter passwordResetRateLimiter;
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+    private final AppProperties appProperties;
 
     public AuthServiceImpl(UserRepository repository,
                            PasswordEncoder passwordEncoder,
                            JwtService jwtService,
                            RefreshTokenService refreshTokenService,PasswordResetTokenRepository passwordResetTokenRepository,
-                           EmailService emailService) {
+                           EmailService emailService,
+                           PasswordResetRateLimiter passwordResetRateLimiter,
+                           AppProperties appProperties) {
 
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
@@ -43,6 +54,9 @@ public class AuthServiceImpl implements AuthService {
         this.passwordResetTokenRepository =
                 passwordResetTokenRepository;
         this.emailService = emailService;
+        this.passwordResetRateLimiter =
+                passwordResetRateLimiter;
+        this.appProperties = appProperties;
     }
    @Override
    public LoginResponseDto login(LoginRequestDto request) {
@@ -105,9 +119,21 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String forgotPassword(
             ForgotPasswordRequestDto request) {
+        String email =
+                request.getEmail()
+                        .toLowerCase()
+                        .trim();
+
+        if (!passwordResetRateLimiter.isAllowed(email)) {
+
+            throw new TooManyRequestsException(
+                    "Too many password reset requests. Please try again later."
+            );
+        }
 
         Optional<User> optionalUser =
                 repository.findByEmail(request.getEmail());
+
 
         /*
          * Do not reveal whether the email exists.
@@ -130,19 +156,19 @@ public class AuthServiceImpl implements AuthService {
 
         byte[] randomBytes = new byte[32];
         secureRandom.nextBytes(randomBytes);
-
         String token =
                 java.util.Base64.getUrlEncoder()
                         .withoutPadding()
                         .encodeToString(randomBytes);
 
-        /*
-         * Token expires after 15 minutes.
-         */
+// Hash the token before storing it in database
+        String hashedToken =
+                PasswordResetTokenUtil.hashToken(token);
+
         PasswordResetToken resetToken =
                 new PasswordResetToken();
 
-        resetToken.setToken(token);
+        resetToken.setToken(hashedToken);
         resetToken.setUser(user);
         resetToken.setExpiryDate(
                 Instant.now().plus(15, ChronoUnit.MINUTES)
@@ -154,9 +180,9 @@ public class AuthServiceImpl implements AuthService {
          * Password reset frontend URL.
          */
         String resetLink =
-                "http://localhost:3000/reset-password?token="
+                appProperties.getFrontendUrl()
+                        + "/reset-password?token="
                         + token;
-
         emailService.sendEmail(
                 user.getEmail(),
                 "Password Reset - Agentic AI E-Commerce",
@@ -187,9 +213,14 @@ public class AuthServiceImpl implements AuthService {
     public String resetPassword(
             ResetPasswordRequestDto request) {
 
+        String hashedToken =
+                PasswordResetTokenUtil.hashToken(
+                        request.getToken()
+                );
+
         PasswordResetToken resetToken =
                 passwordResetTokenRepository
-                        .findByToken(request.getToken())
+                        .findByToken(hashedToken)
                         .orElseThrow(() ->
                                 new InvalidCredentialsException(
                                         "Invalid or expired password reset token"
@@ -246,6 +277,23 @@ public class AuthServiceImpl implements AuthService {
          * remain active.
          */
         refreshTokenService.deleteByUser(user);
+        emailService.sendEmail(
+                user.getEmail(),
+                "Password Reset Successful - Agentic AI E-Commerce",
+                """
+                Hi %s,
+        
+                Your password has been successfully reset.
+        
+                Your old password can no longer be used.
+        
+                If you made this change, no further action is required.
+        
+                If you did not reset your password, please contact support immediately.
+        
+                Team Agentic AI
+                """.formatted(user.getFullName())
+        );
 
         return "Password reset successfully";
     }

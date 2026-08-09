@@ -81,5 +81,21 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequestsException(
+            TooManyRequestsException ex) {
+
+        ErrorResponse response = new ErrorResponse();
+
+        response.setTimestamp(LocalDateTime.now());
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setError(HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase());
+        response.setMessage(ex.getMessage());
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.TOO_MANY_REQUESTS
+        );
+    }
     
 }
