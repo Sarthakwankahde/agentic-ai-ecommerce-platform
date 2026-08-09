@@ -15,7 +15,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
@@ -35,16 +34,35 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Public APIs
                         .requestMatchers(
                                 "/api/v1/users/register",
                                 "/api/v1/auth/login",
-                                "/api/v1/auth/logout"
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password"
                         ).permitAll()
 
+                        // ADMIN only APIs
+                        .requestMatchers("/api/v1/admin/**")
+                        .hasRole("ADMIN")
+
+                        // USER only APIs
+                        .requestMatchers("/api/v1/user/**")
+                        .hasRole("USER")
+
+                        // AI APIs can be accessed by authenticated users
+                        .requestMatchers("/api/v1/ai/**")
+                        .hasAnyRole("USER", "ADMIN")
+
+                        // Everything else requires login
                         .anyRequest()
                         .authenticated()
                 )
@@ -58,4 +76,5 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 }

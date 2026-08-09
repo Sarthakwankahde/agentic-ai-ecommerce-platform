@@ -8,6 +8,8 @@ import com.sarthak.agenticai.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.sarthak.agenticai.dto.ForgotPasswordRequestDto;
+import com.sarthak.agenticai.dto.ResetPasswordRequestDto;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -40,5 +42,17 @@ public class AuthController {
         service.logout(user.getUsername());
 
         return "Logout Successful";
+    }
+    @PostMapping("/forgot-password")
+    public String forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequestDto request) {
+
+        return service.forgotPassword(request);
+    }
+    @PostMapping("/reset-password")
+    public String resetPassword(
+            @Valid @RequestBody ResetPasswordRequestDto request) {
+
+        return service.resetPassword(request);
     }
 }

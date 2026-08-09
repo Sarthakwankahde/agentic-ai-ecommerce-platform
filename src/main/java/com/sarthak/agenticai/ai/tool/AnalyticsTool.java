@@ -1,6 +1,8 @@
 package com.sarthak.agenticai.ai.tool;
 
 import com.sarthak.agenticai.service.AnalyticsService;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,6 +14,8 @@ public class AnalyticsTool {
         this.analyticsService = analyticsService;
     }
 
+    @Tool(description = "Returns revenue analytics including total revenue, today's revenue, monthly revenue, and yearly revenue")
+    @PreAuthorize("hasRole('ADMIN')")
     public String getRevenueAnalytics() {
 
         var revenue =

@@ -3,6 +3,7 @@ package com.sarthak.agenticai.ai.tool;
 import com.sarthak.agenticai.dto.CartRequestDto;
 import com.sarthak.agenticai.dto.CartResponseDto;
 import com.sarthak.agenticai.service.CartService;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,11 @@ public class CartTool {
     }
 
     @Tool(description = "Returns all products currently present in the customer's shopping cart.")
-    public String getCart(String email) {
+    public String getCart(ToolContext toolContext) {
+
+        String email = (String) toolContext
+                .getContext()
+                .get("email");
 
         return buildCartResponse(
                 cartService.getCart(email)
@@ -27,9 +32,13 @@ public class CartTool {
 
     @Tool(description = "Adds a product to the customer's shopping cart.")
     public String addToCart(
-            String email,
             Long productId,
-            Integer quantity) {
+            Integer quantity,
+            ToolContext toolContext) {
+
+        String email = (String) toolContext
+                .getContext()
+                .get("email");
 
         CartRequestDto request = new CartRequestDto();
 
@@ -44,9 +53,13 @@ public class CartTool {
 
     @Tool(description = "Updates the quantity of an existing product in the customer's shopping cart.")
     public String updateCartItem(
-            String email,
             Long cartItemId,
-            Integer quantity) {
+            Integer quantity,
+            ToolContext toolContext) {
+
+        String email = (String) toolContext
+                .getContext()
+                .get("email");
 
         CartResponseDto cart =
                 cartService.updateCartItem(
@@ -60,23 +73,35 @@ public class CartTool {
 
     @Tool(description = "Removes a specific product from the customer's shopping cart.")
     public String removeCartItem(
-            String email,
-            Long cartItemId) {
+            Long cartItemId,
+            ToolContext toolContext) {
 
-        cartService.removeCartItem(email, cartItemId);
+        String email = (String) toolContext
+                .getContext()
+                .get("email");
+
+        cartService.removeCartItem(
+                email,
+                cartItemId
+        );
 
         return "Cart item removed successfully.";
     }
 
     @Tool(description = "Removes every product from the customer's shopping cart.")
-    public String clearCart(String email) {
+    public String clearCart(ToolContext toolContext) {
+
+        String email = (String) toolContext
+                .getContext()
+                .get("email");
 
         cartService.clearCart(email);
 
         return "Your cart has been cleared.";
     }
 
-    private String buildCartResponse(List<CartResponseDto> carts) {
+    private String buildCartResponse(
+            List<CartResponseDto> carts) {
 
         if (carts.isEmpty()) {
             return "Your cart is empty.";
@@ -116,7 +141,10 @@ public class CartTool {
                 ------------------------------
                 Total Items : %d
                 Grand Total : ₹%s
-                """.formatted(totalItems, grandTotal));
+                """.formatted(
+                totalItems,
+                grandTotal
+        ));
 
         return response.toString();
     }

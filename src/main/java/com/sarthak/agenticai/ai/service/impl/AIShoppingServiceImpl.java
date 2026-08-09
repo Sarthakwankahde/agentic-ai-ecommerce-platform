@@ -1,185 +1,103 @@
-    package com.sarthak.agenticai.ai.service.impl;
+package com.sarthak.agenticai.ai.service.impl;
 
-    import com.sarthak.agenticai.ai.service.AIShoppingService;
-    import com.sarthak.agenticai.dto.ProductResponseDto;
-    import com.sarthak.agenticai.service.AnalyticsService;
-    import com.sarthak.agenticai.service.OrderService;
-    import com.sarthak.agenticai.service.PaymentService;
-    import com.sarthak.agenticai.service.ProductService;
-    import org.springframework.ai.chat.client.ChatClient;
-    import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-    import org.springframework.ai.chat.memory.ChatMemory;
-    import org.springframework.stereotype.Service;
-    import com.sarthak.agenticai.ai.tool.ProductTool;
-    import com.sarthak.agenticai.ai.tool.OrderTool;
-    import com.sarthak.agenticai.ai.tool.CartTool;
-    import com.sarthak.agenticai.ai.tool.PaymentTool;
-    import com.sarthak.agenticai.ai.tool.AnalyticsTool;
-    import reactor.core.scheduler.Schedulers;
+import com.sarthak.agenticai.ai.service.AIShoppingService;
+import com.sarthak.agenticai.ai.tool.AnalyticsTool;
+import com.sarthak.agenticai.ai.tool.CartTool;
+import com.sarthak.agenticai.ai.tool.OrderTool;
+import com.sarthak.agenticai.ai.tool.PaymentTool;
+import com.sarthak.agenticai.ai.tool.ProductTool;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.stereotype.Service;
+import java.util.Map;
 
-    @Service
-    public class AIShoppingServiceImpl implements AIShoppingService {
+@Service
+public class AIShoppingServiceImpl implements AIShoppingService {
 
-        private final ChatClient chatClient;
-        private final ProductTool productTool;
+    private final ChatClient chatClient;
 
-        private final OrderTool orderTool;
+    private final ProductTool productTool;
+    private final OrderTool orderTool;
+    private final CartTool cartTool;
+    private final PaymentTool paymentTool;
+    private final AnalyticsTool analyticsTool;
 
-        private final CartTool cartTool;
+    public AIShoppingServiceImpl(
+            ChatClient.Builder builder,
+            ProductTool productTool,
+            OrderTool orderTool,
+            CartTool cartTool,
+            PaymentTool paymentTool,
+            AnalyticsTool analyticsTool,
+            ChatMemory chatMemory
+    ) {
 
-        private final PaymentTool paymentTool;
+        this.productTool = productTool;
+        this.orderTool = orderTool;
+        this.cartTool = cartTool;
+        this.paymentTool = paymentTool;
+        this.analyticsTool = analyticsTool;
 
-        private final AnalyticsTool analyticsTool;
+        this.chatClient = builder
+                .defaultAdvisors(
+                        MessageChatMemoryAdvisor.builder(chatMemory)
+                                .build()
+                )
+                .build();
+    }
+    @Override
+    public String ask(String email, String message) {
 
-        private final ChatMemory chatMemory;
+        String systemPrompt = """
+            You are an intelligent AI Shopping Assistant
+            for an e-commerce platform.
 
-        public AIShoppingServiceImpl(
-                ChatClient.Builder builder,
-                ProductTool productTool,
-                ChatMemory chatMemory,
-                OrderTool orderTool,
-                CartTool cartTool,
-                PaymentTool paymentTool,
-                AnalyticsTool analyticsTool
-        ) {
+            Your responsibilities include:
 
-            /*this.chatClient = builder.build();*/
-            this.productTool = productTool;
-            this.chatMemory = chatMemory;
-            this.chatClient = builder
-                    .defaultAdvisors(
-                            MessageChatMemoryAdvisor.builder(chatMemory)
-                                    .conversationId("default")
-                                    .order(20)
-                                    .scheduler(Schedulers.boundedElastic())
-                                    .build()
-                    )
-                    .build();
-            this.orderTool = orderTool;
-            this.cartTool = cartTool;
-            this.paymentTool = paymentTool;
-            this.analyticsTool = analyticsTool;
-        }
-        @Override
-        public String ask(String email, String message) {
+            1. Helping customers find products.
+            2. Searching and recommending products.
+            3. Managing shopping carts.
+            4. Checking customer orders.
+            5. Cancelling customer orders.
+            6. Checking payment information.
+            7. Providing business analytics when requested.
 
-            String lowerMessage = message.toLowerCase();
+            IMPORTANT RULES:
 
-            // -------------------------------
-            // Product Questions
-            // -------------------------------
-            if (lowerMessage.contains("product")
-                    || lowerMessage.contains("laptop")
-                    || lowerMessage.contains("phone")
-                    || lowerMessage.contains("mobile")
-                    || lowerMessage.contains("electronics")
-                    || lowerMessage.contains("computer")
-                    || lowerMessage.contains("headphone")
-                    || lowerMessage.contains("watch")
-                    || lowerMessage.contains("shoe")) {
+            - Use tools whenever the user asks for information
+              that can be obtained from the application.
+            - Never invent product information.
+            - Never invent order information.
+            - Never invent payment information.
+            - Never invent prices or stock information.
+            - Give concise and helpful responses.
+            - For shopping operations, use the appropriate tool.
+            """;
 
-                String productInfo = productTool.getAllProducts();
+        return chatClient
+                .prompt()
+                .system(systemPrompt)
+                .user(message)
 
-                String prompt = """
-                You are an expert AI Shopping Assistant.
+                .tools(
+                        productTool,
+                        orderTool,
+                        cartTool,
+                        paymentTool,
+                        analyticsTool
+                )
 
-                Answer ONLY using the product information below.
+                .toolContext(
+                        Map.of("email", email)
+                )
 
-                If a product is unavailable, politely inform the user.
+                .advisors(advisor -> advisor.param(
+                        ChatMemory.CONVERSATION_ID,
+                        email
+                ))
 
-                Available Products:
-
-                %s
-
-                Customer Question:
-                %s
-                """.formatted(productInfo, message);
-
-                return chatClient.prompt(prompt)
-                        .call()
-                        .content();
-            }
-
-            // -------------------------------
-            // Order Questions
-            // -------------------------------
-            if (lowerMessage.contains("order")
-                    || lowerMessage.contains("track")
-                    || lowerMessage.contains("history")
-                    || lowerMessage.contains("status")) {
-
-                String orderInfo = orderTool.getMyOrders(email);
-
-                String prompt = """
-                You are an AI Order Assistant.
-
-                Answer ONLY using the order information below.
-
-                %s
-
-                Customer Question:
-                %s
-                """.formatted(orderInfo, message);
-
-                return chatClient.prompt(prompt)
-                        .call()
-                        .content();
-            }
-
-            // -------------------------------
-            // Revenue / Analytics Questions
-            // -------------------------------
-            if (lowerMessage.contains("revenue")
-                    || lowerMessage.contains("sales")
-                    || lowerMessage.contains("analytics")) {
-
-                String analytics = analyticsTool.getRevenueAnalytics();
-
-                String prompt = """
-                You are an AI Business Analyst.
-
-                Explain the following business analytics in simple English.
-
-                %s
-                """.formatted(analytics);
-
-                return chatClient.prompt(prompt)
-                        .call()
-                        .content();
-            }
-
-            // -------------------------------
-            // Payment Questions
-            // -------------------------------
-            if (lowerMessage.contains("payment")) {
-
-                String paymentInfo = paymentTool.getMyPayments(email);
-
-                String prompt = """
-                You are an AI Payment Assistant.
-
-                Explain the payment information below.
-
-                %s
-
-                Customer Question:
-                %s
-                """.formatted(paymentInfo, message);
-
-                return chatClient.prompt(prompt)
-                        .call()
-                        .content();
-            }
-
-            // -------------------------------
-            // Default
-            // -------------------------------
-            return chatClient
-                    .prompt(message)
-                    .advisors(a -> a.param(
-                            ChatMemory.CONVERSATION_ID,
-                            email
-                    ))
-                    .call()
-                    .content();
-        }    }
+                .call()
+                .content();
+    }
+}

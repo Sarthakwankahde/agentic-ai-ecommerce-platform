@@ -3,6 +3,7 @@ package com.sarthak.agenticai.ai.tool;
 import com.sarthak.agenticai.dto.PaymentRequestDto;
 import com.sarthak.agenticai.dto.PaymentResponseDto;
 import com.sarthak.agenticai.service.PaymentService;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
 
@@ -19,14 +20,22 @@ public class PaymentTool {
 
     @Tool(description = "Creates a payment order for an existing order")
     public String createPaymentOrder(
-            String email,
-            Long orderId) {
+            Long orderId,
+            ToolContext toolContext) {
 
-        PaymentRequestDto request = new PaymentRequestDto();
+        String email =
+                (String) toolContext.getContext().get("email");
+
+        PaymentRequestDto request =
+                new PaymentRequestDto();
+
         request.setOrderId(orderId);
 
         PaymentResponseDto payment =
-                paymentService.createPaymentOrder(email, request);
+                paymentService.createPaymentOrder(
+                        email,
+                        request
+                );
 
         return buildPaymentResponse(List.of(payment));
     }
@@ -48,7 +57,11 @@ public class PaymentTool {
     }
 
     @Tool(description = "Returns all payments made by the logged-in user")
-    public String getMyPayments(String email) {
+    public String getMyPayments(
+            ToolContext toolContext) {
+
+        String email =
+                (String) toolContext.getContext().get("email");
 
         return buildPaymentResponse(
                 paymentService.getMyPayments(email)
@@ -57,13 +70,21 @@ public class PaymentTool {
 
     @Tool(description = "Returns payment details for a specific order")
     public String getPaymentByOrder(
-            String email,
-            Long orderId) {
+            Long orderId,
+            ToolContext toolContext) {
+
+        String email =
+                (String) toolContext.getContext().get("email");
 
         PaymentResponseDto payment =
-                paymentService.getPaymentByOrderId(email, orderId);
+                paymentService.getPaymentByOrderId(
+                        email,
+                        orderId
+                );
 
-        return buildPaymentResponse(List.of(payment));
+        return buildPaymentResponse(
+                List.of(payment)
+        );
     }
 
     private String buildPaymentResponse(
@@ -73,7 +94,8 @@ public class PaymentTool {
             return "No payment records found.";
         }
 
-        StringBuilder response = new StringBuilder();
+        StringBuilder response =
+                new StringBuilder();
 
         int index = 1;
 
