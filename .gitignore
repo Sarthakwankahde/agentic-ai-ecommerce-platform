@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# React Frontend
+agentic-ai-frontend/node_modules/
+agentic-ai-frontend/.env
+agentic-ai-frontend/dist/
