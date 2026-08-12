@@ -1,129 +1,191 @@
 import { useState } from "react";
-import api from "../services/api";
+import { useNavigate } from "react-router-dom";
+
+import { login as loginApi } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
 
-    const [formData, setFormData] = useState({
-        email: "",
-        password: ""
-    });
+    const navigate = useNavigate();
+    const { login } = useAuth();
 
-    const [message, setMessage] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
 
-    const handleSubmit = async (e) => {
+    // ========================================
+    // HANDLE LOGIN
+    // ========================================
+
+    const handleLogin = async (e) => {
 
         e.preventDefault();
 
+        setError("");
         setLoading(true);
-        setMessage("");
 
         try {
 
-            const response = await api.post(
-                "/auth/login",
-                formData
+            const data = await loginApi(
+                email,
+                password
             );
 
-            console.log("Login Response:", response.data);
+            console.log(
+                "Login Response:",
+                data
+            );
 
-            const {
-                accessToken,
-                refreshToken,
-                tokenType
-            } = response.data;
+
+            // ========================================
+            // SAVE AUTHENTICATION TOKENS
+            // ========================================
+
+            login(
+                data.accessToken,
+                data.refreshToken
+            );
+
+
+            // ========================================
+            // SAVE EMAIL
+            // Used for cart operations
+            // ========================================
 
             localStorage.setItem(
-                "accessToken",
-                accessToken
+                "email",
+                email
             );
 
-            localStorage.setItem(
-                "refreshToken",
-                refreshToken
-            );
 
-            localStorage.setItem(
-                "tokenType",
-                tokenType
-            );
+            // ========================================
+            // LOGIN SUCCESSFUL
+            // ========================================
 
-            setMessage("Login successful!");
+            navigate("/");
+
 
         } catch (error) {
 
-            console.error("Login Error:", error);
+            console.error(
+                "Login Error:",
+                error
+            );
+
+
+            // ========================================
+            // HANDLE SERVER ERROR
+            // ========================================
 
             if (error.response) {
-                setMessage(
+
+                setError(
                     error.response.data?.message ||
                     "Invalid email or password"
                 );
+
             } else {
-                setMessage(
+
+                setError(
                     "Unable to connect to server"
                 );
             }
 
+
         } finally {
 
             setLoading(false);
-
         }
     };
+
+
+    // ========================================
+    // UI
+    // ========================================
 
     return (
         <div>
 
             <h1>Login</h1>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleLogin}>
+
+                {/* =========================
+                    EMAIL
+                ========================= */}
 
                 <div>
-                    <label>Email</label>
+
+                    <label>
+                        Email
+                    </label>
 
                     <input
                         type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) =>
+                            setEmail(e.target.value)
+                        }
                         required
                     />
+
                 </div>
 
+
+                {/* =========================
+                    PASSWORD
+                ========================= */}
+
                 <div>
-                    <label>Password</label>
+
+                    <label>
+                        Password
+                    </label>
 
                     <input
                         type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) =>
+                            setPassword(e.target.value)
+                        }
                         required
                     />
+
                 </div>
+
+
+                {/* =========================
+                    ERROR
+                ========================= */}
+
+                {error && (
+
+                    <p style={{ color: "red" }}>
+                        {error}
+                    </p>
+
+                )}
+
+
+                {/* =========================
+                    LOGIN BUTTON
+                ========================= */}
 
                 <button
                     type="submit"
                     disabled={loading}
                 >
-                    {loading ? "Logging in..." : "Login"}
+
+                    {loading
+                        ? "Logging in..."
+                        : "Login"}
+
                 </button>
 
             </form>
-
-            {message && (
-                <p>{message}</p>
-            )}
 
         </div>
     );

@@ -109,3 +109,86 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar {
+  width: 100%;
+  min-height: 70px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 30px;
+
+  background-color: var(--code-bg);
+  border-bottom: 1px solid var(--border);
+
+  box-sizing: border-box;
+}
+
+.navbar-brand {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.navbar-brand a {
+  color: var(--text-h);
+  text-decoration: none;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.navbar-links a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 16px;
+
+  transition: color 0.2s ease;
+}
+
+.navbar-links a:hover {
+  color: var(--accent);
+}
+
+.navbar-auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-auth a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.navbar-auth a:hover {
+  color: var(--accent);
+}
+
+.navbar-auth button {
+  border: 1px solid var(--border);
+
+  padding: 8px 16px;
+
+  background-color: var(--accent);
+  color: white;
+
+  border-radius: 6px;
+
+  font-size: 14px;
+  cursor: pointer;
+
+  transition: opacity 0.2s ease;
+}
+
+.navbar-auth button:hover {
+  opacity: 0.85;
+}
