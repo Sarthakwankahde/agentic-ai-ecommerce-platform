@@ -91,6 +91,7 @@ public class CartServiceImpl implements CartService {
         // Return Response
         return new CartResponseDto(
                 cart.getId(),
+                cartItem.getId(),
                 product.getId(),
                 product.getName(),
                 product.getImageUrl(),
@@ -118,6 +119,7 @@ public class CartServiceImpl implements CartService {
 
                     return new CartResponseDto(
                             cart.getId(),
+                            cartItem.getId(),
                             product.getId(),
                             product.getName(),
                             product.getImageUrl(),
@@ -146,6 +148,7 @@ public class CartServiceImpl implements CartService {
 
         return new CartResponseDto(
                 cartItem.getCart().getId(),
+                cartItem.getId(),
                 product.getId(),
                 product.getName(),
                 product.getImageUrl(),

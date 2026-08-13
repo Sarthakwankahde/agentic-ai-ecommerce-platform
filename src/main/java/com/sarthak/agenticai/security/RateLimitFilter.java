@@ -118,9 +118,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
                         ).toSeconds()
                 );
 
-        response.setStatus(
-                HttpServletResponse.SC_TOO_MANY_REQUESTS
-        );
+        /*
+         * HTTP 429 = Too Many Requests
+         */
+        response.setStatus(429);
 
         response.setContentType(
                 "application/json"

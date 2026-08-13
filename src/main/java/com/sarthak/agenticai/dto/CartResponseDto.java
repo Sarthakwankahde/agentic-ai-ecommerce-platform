@@ -4,6 +4,8 @@ public class CartResponseDto {
 
     private Long cartId;
 
+    private Long cartItemId;
+
     private Long productId;
 
     private String productName;
@@ -20,6 +22,7 @@ public class CartResponseDto {
     }
 
     public CartResponseDto(Long cartId,
+                           Long cartItemId,
                            Long productId,
                            String productName,
                            String imageUrl,
@@ -28,6 +31,7 @@ public class CartResponseDto {
                            Double totalPrice) {
 
         this.cartId = cartId;
+        this.cartItemId = cartItemId;
         this.productId = productId;
         this.productName = productName;
         this.imageUrl = imageUrl;
@@ -90,5 +94,12 @@ public class CartResponseDto {
 
     public void setTotalPrice(Double totalPrice) {
         this.totalPrice = totalPrice;
+    }
+    public Long getCartItemId() {
+        return cartItemId;
+    }
+
+    public void setCartItemId(Long cartItemId) {
+        this.cartItemId = cartItemId;
     }
 }

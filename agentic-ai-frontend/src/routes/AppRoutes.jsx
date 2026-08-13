@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 
@@ -7,18 +7,20 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Products from "../pages/Products";
 import ProductDetails from "../pages/ProductDetails";
+
 import Cart from "../pages/Cart";
 import Wishlist from "../pages/Wishlist";
 import Orders from "../pages/Orders";
+import OrderDetails from "../pages/OrderDetails";
 import Profile from "../pages/Profile";
+import Address from "../pages/Address";
 
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
 
     return (
-        <BrowserRouter>
-
+        <>
             <Navbar />
 
             <Routes>
@@ -46,6 +48,7 @@ function AppRoutes() {
                     path="/products"
                     element={<Products />}
                 />
+
                 <Route
                     path="/products/:id"
                     element={<ProductDetails />}
@@ -72,17 +75,24 @@ function AppRoutes() {
                         path="/orders"
                         element={<Orders />}
                     />
+                    <Route
+                        path="/orders/:orderId"
+                        element={<OrderDetails />}
+                    />
 
                     <Route
                         path="/profile"
                         element={<Profile />}
                     />
+                    <Route
+                        path="/addresses"
+                        element={<Address />}
+                    />
 
                 </Route>
 
             </Routes>
-
-        </BrowserRouter>
+        </>
     );
 }
 

@@ -1,8 +1,8 @@
 function Home() {
     return (
         <div>
-            <h1>Home</h1>
-            <p>Welcome to Agentic AI Academic Assistant</p>
+            <h1>Agentic AI E-Commerce Platform</h1>
+            <p>React application is working.</p>
         </div>
     );
 }

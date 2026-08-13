@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sarthak.agenticai.entity.Order;
 import com.sarthak.agenticai.entity.OrderItem;
@@ -44,7 +45,7 @@ public class OrderServiceImpl implements OrderService {
         this.userRepository = userRepository;
     }
 
-
+    @Transactional
 @Override
 public OrderResponseDto placeOrder(String email) {
 
@@ -228,6 +229,7 @@ public OrderResponseDto getOrderById(
 
     return response;
 }
+@Transactional
 @Override
 public void cancelOrder(
         Long orderId,
