@@ -250,6 +250,7 @@ function Products() {
                     Search
                 </button>
 
+
             </div>
 
 
@@ -334,8 +335,11 @@ function Products() {
                                 Quantity:{" "}
                                 {product.quantity}
                             </p>
-
-                            <button>
+                            <button
+                                onClick={() =>
+                                    handleAddToCart(product.id)
+                                }
+                            >
                                 Add to Cart
                             </button>
                             <button

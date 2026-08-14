@@ -1,10 +1,9 @@
+// src/pages/OrderDetails.jsx
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import {
-    getOrderById,
-    cancelOrder
-} from "../services/orderService";
+import { getOrderById } from "../services/orderService";
 
 function OrderDetails() {
 
@@ -15,99 +14,46 @@ function OrderDetails() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const email = localStorage.getItem("email");
-
 
     // ========================================
     // LOAD ORDER
     // ========================================
 
-    const loadOrder = async () => {
-
-        if (!email) {
-
-            setError("User email not found.");
-            setLoading(false);
-
-            return;
-        }
-
-        try {
-
-            setLoading(true);
-            setError("");
-
-            const data = await getOrderById(
-                orderId,
-                email
-            );
-
-            setOrder(data);
-
-        } catch (error) {
-
-            console.error(
-                "Failed to load order:",
-                error
-            );
-
-            setError(
-                "Failed to load order."
-            );
-
-        } finally {
-
-            setLoading(false);
-        }
-    };
-
-
-    // ========================================
-    // INITIAL LOAD
-    // ========================================
-
     useEffect(() => {
+
+        const loadOrder = async () => {
+
+            try {
+
+                setLoading(true);
+                setError("");
+
+                const data =
+                    await getOrderById(orderId);
+
+                setOrder(data);
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to load order:",
+                    error
+                );
+
+                setError(
+                    error.response?.data?.message ||
+                    "Failed to load order."
+                );
+
+            } finally {
+
+                setLoading(false);
+            }
+        };
 
         loadOrder();
 
     }, [orderId]);
-
-
-    // ========================================
-    // CANCEL ORDER
-    // ========================================
-
-    const handleCancelOrder = async () => {
-
-        const confirmed = window.confirm(
-            "Are you sure you want to cancel this order?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-
-            await cancelOrder(
-                orderId,
-                email
-            );
-
-            await loadOrder();
-
-        } catch (error) {
-
-            console.error(
-                "Failed to cancel order:",
-                error
-            );
-
-            setError(
-                "Failed to cancel order."
-            );
-        }
-    };
 
 
     // ========================================
@@ -118,15 +64,8 @@ function OrderDetails() {
 
         return (
             <div>
-
-                <h1>
-                    Order Details
-                </h1>
-
-                <p>
-                    Loading order...
-                </p>
-
+                <h1>Order Details</h1>
+                <p>Loading order...</p>
             </div>
         );
     }
@@ -141,9 +80,7 @@ function OrderDetails() {
         return (
             <div>
 
-                <h1>
-                    Order Details
-                </h1>
+                <h1>Order Details</h1>
 
                 <p>
                     {error || "Order not found."}
@@ -167,140 +104,72 @@ function OrderDetails() {
     // ========================================
 
     return (
-
         <div className="order-details-page">
 
-            {/* =========================
-                HEADER
-            ========================= */}
-
-            <div>
-
-                <button
-                    onClick={() =>
-                        navigate("/orders")
-                    }
-                >
-                    ← Back to Orders
-                </button>
-
-                <h1>
-                    Order #{order.orderId}
-                </h1>
-
-                <p>
-                    Date:{" "}
-                    {new Date(
-                        order.orderDate
-                    ).toLocaleString()}
-                </p>
-
-                <p>
-                    Status:{" "}
-                    <strong>
-                        {order.status}
-                    </strong>
-                </p>
-
-            </div>
+            <button
+                onClick={() =>
+                    navigate("/orders")
+                }
+            >
+                ← Back to Orders
+            </button>
 
 
-            {/* =========================
+            <h1>
+                Order #{order.id}
+            </h1>
+
+
+            <p>
+                Status: {order.status}
+            </p>
+
+            <p>
+                Total Amount: ₹
+                {order.totalAmount}
+            </p>
+
+            <p>
+                Order Date: {order.orderDate}
+            </p>
+
+
+            {/* ========================================
                 ORDER ITEMS
-            ========================= */}
+            ======================================== */}
+
+            <h2>
+                Order Items
+            </h2>
 
             <div>
 
-                <h2>
-                    Order Items
-                </h2>
+                {order.items?.map((item) => (
 
-                {order.items &&
-                    order.items.map((item) => (
+                    <div
+                        key={item.id}
+                        className="order-item"
+                    >
 
-                        <div
-                            className="order-item"
-                            key={item.productId}
-                        >
+                        <h3>
+                            {item.productName}
+                        </h3>
 
-                            <h3>
-                                {item.productName}
-                            </h3>
+                        <p>
+                            Price: ₹{item.price}
+                        </p>
 
-                            <p>
-                                Product ID:{" "}
-                                {item.productId}
-                            </p>
+                        <p>
+                            Quantity: {item.quantity}
+                        </p>
 
-                            <p>
-                                Quantity:{" "}
-                                {item.quantity}
-                            </p>
+                        <p>
+                            Total: ₹{item.totalPrice}
+                        </p>
 
-                            <p>
-                                Price: ₹
-                                {item.price}
-                            </p>
+                    </div>
 
-                            <p>
-                                Item Total: ₹
-                                {
-                                    item.price *
-                                    item.quantity
-                                }
-                            </p>
-
-                        </div>
-
-                    ))}
-
-            </div>
-
-
-            {/* =========================
-                ORDER SUMMARY
-            ========================= */}
-
-            <div>
-
-                <h2>
-                    Order Summary
-                </h2>
-
-                <h3>
-                    Total Amount: ₹
-                    {order.totalAmount}
-                </h3>
-
-            </div>
-
-
-            {/* =========================
-                ACTIONS
-            ========================= */}
-
-            <div>
-
-                {order.status !== "CANCELLED" &&
-                    order.status !== "DELIVERED" && (
-
-                        <button
-                            onClick={
-                                handleCancelOrder
-                            }
-                        >
-                            Cancel Order
-                        </button>
-
-                    )}
-
-                <button
-                    onClick={() =>
-                        navigate("/products")
-                    }
-                >
-                    Continue Shopping
-                </button>
+                ))}
 
             </div>
 

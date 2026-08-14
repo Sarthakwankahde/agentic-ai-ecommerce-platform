@@ -37,24 +37,35 @@ public class PaymentTool {
                         request
                 );
 
-        return buildPaymentResponse(List.of(payment));
+        return buildPaymentResponse(
+                List.of(payment)
+        );
     }
+
 
     @Tool(description = "Verify a Razorpay payment after successful payment")
     public String verifyPayment(
             String razorpayOrderId,
             String razorpayPaymentId,
-            String razorpaySignature) {
+            String razorpaySignature,
+            ToolContext toolContext) {
+
+        String email =
+                (String) toolContext.getContext().get("email");
 
         PaymentResponseDto payment =
                 paymentService.verifyPayment(
+                        email,
                         razorpayOrderId,
                         razorpayPaymentId,
                         razorpaySignature
                 );
 
-        return buildPaymentResponse(List.of(payment));
+        return buildPaymentResponse(
+                List.of(payment)
+        );
     }
+
 
     @Tool(description = "Returns all payments made by the logged-in user")
     public String getMyPayments(
@@ -67,6 +78,7 @@ public class PaymentTool {
                 paymentService.getMyPayments(email)
         );
     }
+
 
     @Tool(description = "Returns payment details for a specific order")
     public String getPaymentByOrder(
@@ -86,6 +98,7 @@ public class PaymentTool {
                 List.of(payment)
         );
     }
+
 
     private String buildPaymentResponse(
             List<PaymentResponseDto> payments) {

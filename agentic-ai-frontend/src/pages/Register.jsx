@@ -1,19 +1,55 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { register } from "../services/authService";
+import {
+    useState
+} from "react";
+
+import {
+    Link,
+    useNavigate
+} from "react-router-dom";
+
+import {
+    register
+} from "../services/authService";
+
 
 function Register() {
 
     const navigate = useNavigate();
 
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+    const [
+        fullName,
+        setFullName
+    ] = useState("");
 
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [
+        email,
+        setEmail
+    ] = useState("");
+
+    const [
+        password,
+        setPassword
+    ] = useState("");
+
+    const [
+        confirmPassword,
+        setConfirmPassword
+    ] = useState("");
+
+    const [
+        error,
+        setError
+    ] = useState("");
+
+    const [
+        success,
+        setSuccess
+    ] = useState("");
+
+    const [
+        loading,
+        setLoading
+    ] = useState(false);
 
 
     const handleRegister = async (e) => {
@@ -21,14 +57,25 @@ function Register() {
         e.preventDefault();
 
         setError("");
+
         setSuccess("");
 
 
-        // ================================
-        // PASSWORD CONFIRMATION
-        // ================================
+        if (
+            fullName.trim().length < 3
+        ) {
 
-        if (password !== confirmPassword) {
+            setError(
+                "Full name must contain at least 3 characters."
+            );
+
+            return;
+        }
+
+
+        if (
+            password !== confirmPassword
+        ) {
 
             setError(
                 "Password and Confirm Password do not match."
@@ -38,14 +85,13 @@ function Register() {
         }
 
 
-        // ================================
-        // PASSWORD VALIDATION
-        // ================================
-
         const passwordPattern =
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
 
-        if (!passwordPattern.test(password)) {
+
+        if (
+            !passwordPattern.test(password)
+        ) {
 
             setError(
                 "Password must contain 8-20 characters, one uppercase letter, one lowercase letter, one digit, and one special character."
@@ -60,28 +106,21 @@ function Register() {
 
         try {
 
-            const response = await register(
-                fullName,
-                email,
+            await register(
+                fullName.trim(),
+                email.trim(),
                 password
             );
-
-            console.log(
-                "Registration Response:",
-                response
-            );
-
 
             setSuccess(
                 "Registration successful! Redirecting to login..."
             );
 
-
-            // Redirect to login after 1.5 seconds
             setTimeout(() => {
-                navigate("/login");
-            }, 1500);
 
+                navigate("/login");
+
+            }, 1500);
 
         } catch (error) {
 
@@ -89,7 +128,6 @@ function Register() {
                 "Registration Error:",
                 error
             );
-
 
             if (error.response) {
 
@@ -113,15 +151,16 @@ function Register() {
 
 
     return (
+
         <div>
 
-            <h1>Register</h1>
+            <h1>
+                Create Account
+            </h1>
 
-            <form onSubmit={handleRegister}>
-
-                {/* =========================
-                    FULL NAME
-                ========================== */}
+            <form
+                onSubmit={handleRegister}
+            >
 
                 <div>
 
@@ -133,20 +172,19 @@ function Register() {
                         type="text"
                         value={fullName}
                         onChange={(e) =>
-                            setFullName(e.target.value)
+                            setFullName(
+                                e.target.value
+                            )
                         }
                         placeholder="Enter your full name"
                         minLength={3}
                         maxLength={50}
+                        autoComplete="name"
                         required
                     />
 
                 </div>
 
-
-                {/* =========================
-                    EMAIL
-                ========================== */}
 
                 <div>
 
@@ -158,18 +196,17 @@ function Register() {
                         type="email"
                         value={email}
                         onChange={(e) =>
-                            setEmail(e.target.value)
+                            setEmail(
+                                e.target.value
+                            )
                         }
                         placeholder="Enter your email"
+                        autoComplete="email"
                         required
                     />
 
                 </div>
 
-
-                {/* =========================
-                    PASSWORD
-                ========================== */}
 
                 <div>
 
@@ -181,20 +218,19 @@ function Register() {
                         type="password"
                         value={password}
                         onChange={(e) =>
-                            setPassword(e.target.value)
+                            setPassword(
+                                e.target.value
+                            )
                         }
                         placeholder="Enter your password"
                         minLength={8}
                         maxLength={20}
+                        autoComplete="new-password"
                         required
                     />
 
                 </div>
 
-
-                {/* =========================
-                    CONFIRM PASSWORD
-                ========================== */}
 
                 <div>
 
@@ -206,40 +242,35 @@ function Register() {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) =>
-                            setConfirmPassword(e.target.value)
+                            setConfirmPassword(
+                                e.target.value
+                            )
                         }
                         placeholder="Confirm your password"
+                        autoComplete="new-password"
                         required
                     />
 
                 </div>
 
 
-                {/* =========================
-                    ERROR
-                ========================== */}
-
                 {error && (
-                    <p style={{ color: "red" }}>
+
+                    <p>
                         {error}
                     </p>
+
                 )}
 
-
-                {/* =========================
-                    SUCCESS
-                ========================== */}
 
                 {success && (
-                    <p style={{ color: "green" }}>
+
+                    <p>
                         {success}
                     </p>
+
                 )}
 
-
-                {/* =========================
-                    REGISTER BUTTON
-                ========================== */}
 
                 <button
                     type="submit"
@@ -255,20 +286,13 @@ function Register() {
             </form>
 
 
-            {/* =========================
-                LOGIN LINK
-            ========================== */}
-
             <p>
 
                 Already have an account?{" "}
 
-                <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                >
+                <Link to="/login">
                     Login
-                </button>
+                </Link>
 
             </p>
 

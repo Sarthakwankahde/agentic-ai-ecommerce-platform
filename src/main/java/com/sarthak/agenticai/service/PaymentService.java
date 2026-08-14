@@ -10,14 +10,15 @@ public interface PaymentService {
     PaymentResponseDto createPaymentOrder(
             String email,
             PaymentRequestDto request);
-
-    PaymentResponseDto verifyPayment(
-            String razorpayOrderId,
-            String razorpayPaymentId,
-            String razorpaySignature);
     List<PaymentResponseDto> getMyPayments(String email);
 
     PaymentResponseDto getPaymentByOrderId(
             String email,
             Long orderId);
+    PaymentResponseDto verifyPayment(
+            String email,
+            String razorpayOrderId,
+            String razorpayPaymentId,
+            String razorpaySignature
+    );
 }

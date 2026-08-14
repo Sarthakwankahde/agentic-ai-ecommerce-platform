@@ -8,6 +8,8 @@ import {
     clearCart
 } from "../services/cartService";
 
+import { placeOrder } from "../services/orderService";
+
 function Cart() {
 
     const navigate = useNavigate();
@@ -15,6 +17,7 @@ function Cart() {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [orderLoading, setOrderLoading] = useState(false);
 
     const email = localStorage.getItem("email");
 
@@ -25,8 +28,10 @@ function Cart() {
     const loadCart = async () => {
 
         if (!email) {
+
             setError("User email not found.");
             setLoading(false);
+
             return;
         }
 
@@ -46,13 +51,17 @@ function Cart() {
                 error
             );
 
-            setError("Failed to load cart.");
+            setError(
+                error.response?.data?.message ||
+                "Failed to load cart."
+            );
 
         } finally {
 
             setLoading(false);
         }
     };
+
 
     // ========================================
     // INITIAL LOAD
@@ -63,6 +72,7 @@ function Cart() {
         loadCart();
 
     }, []);
+
 
     // ========================================
     // UPDATE QUANTITY
@@ -78,6 +88,8 @@ function Cart() {
         }
 
         try {
+
+            setError("");
 
             await updateCartItem(
                 email,
@@ -95,10 +107,12 @@ function Cart() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to update quantity."
             );
         }
     };
+
 
     // ========================================
     // REMOVE ITEM
@@ -107,6 +121,8 @@ function Cart() {
     const handleRemove = async (cartItemId) => {
 
         try {
+
+            setError("");
 
             await removeCartItem(
                 email,
@@ -123,10 +139,12 @@ function Cart() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to remove item."
             );
         }
     };
+
 
     // ========================================
     // CLEAR CART
@@ -135,6 +153,8 @@ function Cart() {
     const handleClearCart = async () => {
 
         try {
+
+            setError("");
 
             await clearCart(email);
 
@@ -148,20 +168,89 @@ function Cart() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to clear cart."
             );
         }
     };
 
+
     // ========================================
-    // CALCULATE TOTAL
+    // PLACE ORDER
+    // ========================================
+
+    const handlePlaceOrder = async () => {
+
+        if (cartItems.length === 0) {
+
+            setError(
+                "Your cart is empty."
+            );
+
+            return;
+        }
+
+        try {
+
+            setOrderLoading(true);
+            setError("");
+
+            const order = await placeOrder();
+
+            console.log(
+                "Order Created:",
+                order
+            );
+
+            /*
+             * IMPORTANT
+             *
+             * OrderResponseDto contains:
+             *
+             * orderId
+             *
+             * So we use:
+             *
+             * order.orderId
+             *
+             * NOT:
+             *
+             * order.id
+             */
+
+            navigate(
+                `/orders/${order.orderId}`
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to place order:",
+                error
+            );
+
+            setError(
+                error.response?.data?.message ||
+                "Failed to place order."
+            );
+
+        } finally {
+
+            setOrderLoading(false);
+        }
+    };
+
+
+    // ========================================
+    // CALCULATE CART TOTAL
     // ========================================
 
     const cartTotal = cartItems.reduce(
         (total, item) =>
-            total + item.totalPrice,
+            total + Number(item.totalPrice || 0),
         0
     );
+
 
     // ========================================
     // LOADING
@@ -171,11 +260,17 @@ function Cart() {
 
         return (
             <div>
+
                 <h1>Cart</h1>
-                <p>Loading cart...</p>
+
+                <p>
+                    Loading cart...
+                </p>
+
             </div>
         );
     }
+
 
     // ========================================
     // UI
@@ -184,11 +279,27 @@ function Cart() {
     return (
         <div className="cart-page">
 
-            <h1>Shopping Cart</h1>
+            <h1>
+                Shopping Cart
+            </h1>
+
+
+            {/* ========================================
+                ERROR
+            ======================================== */}
 
             {error && (
-                <p>{error}</p>
+
+                <p style={{ color: "red" }}>
+                    {error}
+                </p>
+
             )}
+
+
+            {/* ========================================
+                EMPTY CART
+            ======================================== */}
 
             {cartItems.length === 0 ? (
 
@@ -212,7 +323,9 @@ function Cart() {
 
                 <>
 
-                    {/* CART ITEMS */}
+                    {/* ========================================
+                        CART ITEMS
+                    ======================================== */}
 
                     <div className="cart-items">
 
@@ -223,10 +336,15 @@ function Cart() {
                                 key={item.cartId}
                             >
 
+                                {/* PRODUCT IMAGE */}
+
                                 <img
                                     src={item.imageUrl}
                                     alt={item.productName}
                                 />
+
+
+                                {/* PRODUCT INFORMATION */}
 
                                 <div>
 
@@ -235,7 +353,8 @@ function Cart() {
                                     </h2>
 
                                     <p>
-                                        Price: ₹{item.price}
+                                        Price: ₹
+                                        {item.price}
                                     </p>
 
                                     <p>
@@ -245,7 +364,10 @@ function Cart() {
 
                                 </div>
 
-                                {/* QUANTITY */}
+
+                                {/* ========================================
+                                    QUANTITY
+                                ======================================== */}
 
                                 <div>
 
@@ -281,7 +403,10 @@ function Cart() {
 
                                 </div>
 
-                                {/* REMOVE */}
+
+                                {/* ========================================
+                                    REMOVE
+                                ======================================== */}
 
                                 <button
                                     onClick={() =>
@@ -299,13 +424,20 @@ function Cart() {
 
                     </div>
 
-                    {/* CART SUMMARY */}
+
+                    {/* ========================================
+                        CART SUMMARY
+                    ======================================== */}
 
                     <div className="cart-summary">
 
                         <h2>
-                            Cart Total: ₹{cartTotal}
+                            Cart Total: ₹
+                            {cartTotal}
                         </h2>
+
+
+                        {/* CLEAR CART */}
 
                         <button
                             onClick={handleClearCart}
@@ -313,12 +445,29 @@ function Cart() {
                             Clear Cart
                         </button>
 
+
+                        {/* CONTINUE SHOPPING */}
+
                         <button
                             onClick={() =>
                                 navigate("/products")
                             }
                         >
                             Continue Shopping
+                        </button>
+
+
+                        {/* ========================================
+                            PLACE ORDER
+                        ======================================== */}
+
+                        <button
+                            onClick={handlePlaceOrder}
+                            disabled={orderLoading}
+                        >
+                            {orderLoading
+                                ? "Placing Order..."
+                                : "Place Order"}
                         </button>
 
                     </div>

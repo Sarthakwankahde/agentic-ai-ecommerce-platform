@@ -149,7 +149,8 @@ public List<OrderResponseDto> getMyOrders(String email) {
             .orElseThrow(() ->
                     new ResourceNotFoundException("User not found"));
 
-    return orderRepository.findByUser(user)
+    return orderRepository
+            .findByUserOrderByOrderDateDesc(user)
             .stream()
             .map(order -> {
 
@@ -245,6 +246,14 @@ public void cancelOrder(
 
     if (order.getStatus() == OrderStatus.CANCELLED) {
         throw new RuntimeException("Order is already cancelled");
+    }
+
+    if (order.getStatus() == OrderStatus.SHIPPED) {
+        throw new RuntimeException("Shipped order cannot be cancelled");
+    }
+
+    if (order.getStatus() == OrderStatus.DELIVERED) {
+        throw new RuntimeException("Delivered order cannot be cancelled");
     }
 
     // Restore Stock

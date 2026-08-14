@@ -36,3 +36,4 @@ build/
 agentic-ai-frontend/node_modules/
 agentic-ai-frontend/.env
 agentic-ai-frontend/dist/
+node_modules/

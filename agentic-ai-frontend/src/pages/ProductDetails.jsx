@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { getProductById } from "../services/productService";
 import { addToCart } from "../services/cartService";
+import { addToWishlist } from "../services/wishlistService";
 import { useAuth } from "../context/AuthContext";
 
 function ProductDetails() {
@@ -14,6 +15,11 @@ function ProductDetails() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const [cartLoading, setCartLoading] = useState(false);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
+
+    const email = localStorage.getItem("email");
 
     // ========================================
     // LOAD PRODUCT
@@ -55,6 +61,107 @@ function ProductDetails() {
 
 
     // ========================================
+    // ADD TO CART
+    // ========================================
+
+    const handleAddToCart = async () => {
+
+        if (!isAuthenticated) {
+
+            navigate("/login");
+
+            return;
+        }
+
+        if (!email) {
+
+            alert("User email not found.");
+
+            return;
+        }
+
+        try {
+
+            setCartLoading(true);
+
+            await addToCart(
+                email,
+                product.id,
+                1
+            );
+
+            alert("Product added to cart.");
+
+        } catch (error) {
+
+            console.error(
+                "Failed to add product to cart:",
+                error
+            );
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to add product to cart."
+            );
+
+        } finally {
+
+            setCartLoading(false);
+        }
+    };
+
+
+    // ========================================
+    // ADD TO WISHLIST
+    // ========================================
+
+    const handleAddToWishlist = async () => {
+
+        if (!isAuthenticated) {
+
+            navigate("/login");
+
+            return;
+        }
+
+        if (!email) {
+
+            alert("User email not found.");
+
+            return;
+        }
+
+        try {
+
+            setWishlistLoading(true);
+
+            await addToWishlist(
+                email,
+                product.id
+            );
+
+            alert("Product added to wishlist.");
+
+        } catch (error) {
+
+            console.error(
+                "Failed to add product to wishlist:",
+                error
+            );
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to add product to wishlist."
+            );
+
+        } finally {
+
+            setWishlistLoading(false);
+        }
+    };
+
+
+    // ========================================
     // LOADING
     // ========================================
 
@@ -77,6 +184,7 @@ function ProductDetails() {
 
         return (
             <div>
+
                 <h1>Product Details</h1>
 
                 <p>
@@ -88,6 +196,7 @@ function ProductDetails() {
                 >
                     Back to Products
                 </button>
+
             </div>
         );
     }
@@ -109,7 +218,10 @@ function ProductDetails() {
 
             <div className="product-details-card">
 
-                {/* PRODUCT IMAGE */}
+
+                {/* ========================================
+                    PRODUCT IMAGE
+                ======================================== */}
 
                 <div className="product-details-image">
 
@@ -121,7 +233,9 @@ function ProductDetails() {
                 </div>
 
 
-                {/* PRODUCT INFORMATION */}
+                {/* ========================================
+                    PRODUCT INFORMATION
+                ======================================== */}
 
                 <div className="product-details-info">
 
@@ -148,10 +262,49 @@ function ProductDetails() {
                     </p>
 
 
-                    {/* ADD TO CART */}
+                    {/* ========================================
+                        ADD TO CART
+                    ======================================== */}
 
-                    <button>
-                        Add to Cart
+                    <button
+                        onClick={handleAddToCart}
+                        disabled={
+                            cartLoading ||
+                            product.quantity <= 0
+                        }
+                    >
+                        {cartLoading
+                            ? "Adding..."
+                            : product.quantity <= 0
+                                ? "Out of Stock"
+                                : "Add to Cart"}
+                    </button>
+
+
+                    {/* ========================================
+                        ADD TO WISHLIST
+                    ======================================== */}
+
+                    <button
+                        onClick={handleAddToWishlist}
+                        disabled={wishlistLoading}
+                    >
+                        {wishlistLoading
+                            ? "Adding..."
+                            : "♡ Add to Wishlist"}
+                    </button>
+
+
+                    {/* ========================================
+                        GO TO WISHLIST
+                    ======================================== */}
+
+                    <button
+                        onClick={() =>
+                            navigate("/wishlist")
+                        }
+                    >
+                        View Wishlist
                     </button>
 
                 </div>

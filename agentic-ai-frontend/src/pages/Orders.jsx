@@ -1,3 +1,6 @@
+// NEXT MODULE: ORDERS
+// src/pages/Orders.jsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,29 +17,18 @@ function Orders() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const email = localStorage.getItem("email");
-
-
     // ========================================
     // LOAD ORDERS
     // ========================================
 
     const loadOrders = async () => {
 
-        if (!email) {
-
-            setError("User email not found.");
-            setLoading(false);
-
-            return;
-        }
-
         try {
 
             setLoading(true);
             setError("");
 
-            const data = await getMyOrders(email);
+            const data = await getMyOrders();
 
             setOrders(data);
 
@@ -48,6 +40,7 @@ function Orders() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to load orders."
             );
 
@@ -85,10 +78,9 @@ function Orders() {
 
         try {
 
-            await cancelOrder(
-                orderId,
-                email
-            );
+            setError("");
+
+            await cancelOrder(orderId);
 
             await loadOrders();
 
@@ -100,6 +92,7 @@ function Orders() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to cancel order."
             );
         }
@@ -115,7 +108,9 @@ function Orders() {
         return (
             <div>
 
-                <h1>Orders</h1>
+                <h1>
+                    My Orders
+                </h1>
 
                 <p>
                     Loading orders...
@@ -138,19 +133,25 @@ function Orders() {
             </h1>
 
 
+            {/* ERROR */}
+
             {error && (
-                <p>
+
+                <p style={{ color: "red" }}>
                     {error}
                 </p>
+
             )}
 
+
+            {/* EMPTY ORDERS */}
 
             {orders.length === 0 ? (
 
                 <div>
 
                     <p>
-                        You have no orders yet.
+                        You have not placed any orders yet.
                     </p>
 
                     <button
@@ -174,118 +175,113 @@ function Orders() {
                             key={order.orderId}
                         >
 
-                            {/* =========================
-                                ORDER HEADER
-                            ========================= */}
+                            {/* ========================================
+                                ORDER INFORMATION
+                            ======================================== */}
 
-                            <div>
+                            <h2>
+                                Order #{order.orderId}
+                            </h2>
 
-                                <h2>
-                                    Order #{order.orderId}
-                                </h2>
-
-                                <p>
-                                    Date:{" "}
-                                    {new Date(
+                            <p>
+                                Date:{" "}
+                                {order.orderDate
+                                    ? new Date(
                                         order.orderDate
-                                    ).toLocaleString()}
-                                </p>
+                                    ).toLocaleString()
+                                    : "N/A"}
+                            </p>
 
-                                <p>
-                                    Status:{" "}
-                                    {order.status}
-                                </p>
+                            <p>
+                                Total Amount: ₹
+                                {order.totalAmount}
+                            </p>
 
-                                <h3>
-                                    Total: ₹
-                                    {order.totalAmount}
-                                </h3>
-
-                            </div>
+                            <p>
+                                Status:{" "}
+                                {order.status}
+                            </p>
 
 
-                            {/* =========================
+                            {/* ========================================
                                 ORDER ITEMS
-                            ========================= */}
+                            ======================================== */}
 
-                            <div>
+                            {order.items &&
+                                order.items.length > 0 && (
 
-                                <h3>
-                                    Items
-                                </h3>
+                                    <div>
 
-                                {order.items &&
-                                    order.items.map(
-                                        (item, index) => (
+                                        <h3>
+                                            Items
+                                        </h3>
 
-                                            <div
-                                                key={item.productId}
-                                            >
+                                        {order.items.map(
+                                            (item, index) => (
 
-                                                <p>
-                                                    Product:{" "}
-                                                    {
-                                                        item.productName
+                                                <div
+                                                    key={
+                                                        item.orderItemId ||
+                                                        index
                                                     }
-                                                </p>
+                                                >
 
-                                                <p>
-                                                    Quantity:{" "}
-                                                    {
-                                                        item.quantity
-                                                    }
-                                                </p>
+                                                    <p>
+                                                        {item.productName}
+                                                    </p>
 
-                                                <p>
-                                                    Price: ₹
-                                                    {
-                                                        item.price
-                                                    }
-                                                </p>
+                                                    <p>
+                                                        Quantity:{" "}
+                                                        {item.quantity}
+                                                    </p>
 
-                                            </div>
+                                                    <p>
+                                                        Price: ₹
+                                                        {item.price}
+                                                    </p>
 
-                                        )
-                                    )}
+                                                </div>
 
-                            </div>
+                                            )
+                                        )}
 
-
-                            {/* =========================
-                                ORDER ACTIONS
-                            ========================= */}
-
-                            <div>
-
-                                <button
-                                    onClick={() =>
-                                        navigate(
-                                            `/orders/${order.orderId}`
-                                        )
-                                    }
-                                >
-                                    View Details
-                                </button>
+                                    </div>
+                                )}
 
 
-                                {order.status !==
-                                    "CANCELLED" &&
-                                    order.status !==
-                                    "DELIVERED" && (
+                            {/* ========================================
+                                VIEW ORDER
+                            ======================================== */}
 
-                                        <button
-                                            onClick={() =>
-                                                handleCancelOrder(
-                                                    order.orderId
-                                                )
-                                            }
-                                        >
-                                            Cancel Order
-                                        </button>
+                            <button
+                                onClick={() =>
+                                    navigate(
+                                        `/orders/${order.orderId}`
+                                    )
+                                }
+                            >
+                                View Details
+                            </button>
 
-                                    )}
 
-                            </div>
+                            {/* ========================================
+                                CANCEL ORDER
+                            ======================================== */}
+
+                            {order.status !== "CANCELLED" &&
+                                order.status !== "DELIVERED" && (
+
+                                    <button
+                                        onClick={() =>
+                                            handleCancelOrder(
+                                                order.orderId
+                                            )
+                                        }
+                                    >
+                                        Cancel Order
+                                    </button>
+
+                                )}
 
                         </div>
 

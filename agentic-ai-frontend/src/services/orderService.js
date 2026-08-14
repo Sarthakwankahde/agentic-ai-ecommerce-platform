@@ -1,19 +1,15 @@
+// src/services/orderService.js
+
 import api from "../api/axios";
 
 // ========================================
 // PLACE ORDER
 // ========================================
 
-export const placeOrder = async (email) => {
+export const placeOrder = async () => {
 
     const response = await api.post(
-        "/orders",
-        null,
-        {
-            params: {
-                email
-            }
-        }
+        "/orders"
     );
 
     return response.data;
@@ -24,15 +20,10 @@ export const placeOrder = async (email) => {
 // GET MY ORDERS
 // ========================================
 
-export const getMyOrders = async (email) => {
+export const getMyOrders = async () => {
 
     const response = await api.get(
-        "/orders",
-        {
-            params: {
-                email
-            }
-        }
+        "/orders"
     );
 
     return response.data;
@@ -43,18 +34,10 @@ export const getMyOrders = async (email) => {
 // GET ORDER BY ID
 // ========================================
 
-export const getOrderById = async (
-    orderId,
-    email
-) => {
+export const getOrderById = async (orderId) => {
 
     const response = await api.get(
-        `/orders/${orderId}`,
-        {
-            params: {
-                email
-            }
-        }
+        `/orders/${orderId}`
     );
 
     return response.data;
@@ -65,20 +48,9 @@ export const getOrderById = async (
 // CANCEL ORDER
 // ========================================
 
-export const cancelOrder = async (
-    orderId,
-    email
-) => {
+export const cancelOrder = async (orderId) => {
 
-    const response = await api.put(
-        `/orders/${orderId}/cancel`,
-        null,
-        {
-            params: {
-                email
-            }
-        }
+    await api.put(
+        `/orders/${orderId}/cancel`
     );
-
-    return response.data;
 };

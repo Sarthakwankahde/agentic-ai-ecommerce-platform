@@ -10,8 +10,10 @@ import com.sarthak.agenticai.repository.PaymentRepository;
 import com.sarthak.agenticai.repository.UserRepository;
 import com.sarthak.agenticai.service.PaymentService;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.razorpay.Utils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +24,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    @Value("${razorpay.key.secret}")
+    private String razorpayKeySecret;
 
     public PaymentServiceImpl(
             RazorpayClient razorpayClient,
@@ -107,41 +111,127 @@ public class PaymentServiceImpl implements PaymentService {
         );
     }
     @Override
+    @Transactional
     public PaymentResponseDto verifyPayment(
+            String email,
             String razorpayOrderId,
             String razorpayPaymentId,
             String razorpaySignature) {
 
+        // 1. Find logged-in user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+
+        // 2. Find payment using Razorpay Order ID
         Payment payment = paymentRepository
                 .findByRazorpayOrderId(razorpayOrderId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Payment not found"));
-        
 
-        payment.setRazorpayPaymentId(razorpayPaymentId);
-        payment.setRazorpaySignature(razorpaySignature);
-        payment.setStatus(PaymentStatus.SUCCESS);
-        payment.setPaymentDate(java.time.LocalDateTime.now());
+        // 3. Verify that payment belongs to logged-in user
+        if (!payment.getOrder()
+                .getUser()
+                .getId()
+                .equals(user.getId())) {
 
-        paymentRepository.save(payment);
+            throw new RuntimeException(
+                    "You are not authorized to verify this payment"
+            );
+        }
 
-        Order order = payment.getOrder();
+        // 4. Prevent duplicate verification
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
 
-        order.setStatus(OrderStatus.CONFIRMED);
+            throw new RuntimeException(
+                    "Payment is already verified"
+            );
+        }
 
-        orderRepository.save(order);
+        try {
 
-        return new PaymentResponseDto(
+            // 5. Prepare Razorpay signature verification data
+            JSONObject options = new JSONObject();
 
-                payment.getId(),
+            options.put(
+                    "razorpay_order_id",
+                    razorpayOrderId
+            );
 
-                payment.getRazorpayOrderId(),
+            options.put(
+                    "razorpay_payment_id",
+                    razorpayPaymentId
+            );
 
-                payment.getAmount(),
+            options.put(
+                    "razorpay_signature",
+                    razorpaySignature
+            );
 
-                payment.getStatus().name()
+            // 6. Verify Razorpay signature
+            boolean isValid =
+                    Utils.verifyPaymentSignature(
+                            options,
+                            razorpayKeySecret
+                    );
 
-        );
+            // 7. If signature is invalid
+            if (!isValid) {
+
+                payment.setStatus(
+                        PaymentStatus.FAILED
+                );
+
+                paymentRepository.save(payment);
+
+                throw new RuntimeException(
+                        "Payment signature verification failed"
+                );
+            }
+
+            // 8. Store Razorpay payment details
+            payment.setRazorpayPaymentId(
+                    razorpayPaymentId
+            );
+
+            payment.setRazorpaySignature(
+                    razorpaySignature
+            );
+
+            payment.setStatus(
+                    PaymentStatus.SUCCESS
+            );
+
+            payment.setPaymentDate(
+                    java.time.LocalDateTime.now()
+            );
+
+            paymentRepository.save(payment);
+
+            // 9. Update order status
+            Order order = payment.getOrder();
+
+            order.setStatus(
+                    OrderStatus.CONFIRMED
+            );
+
+            orderRepository.save(order);
+
+            // 10. Return payment response
+            return new PaymentResponseDto(
+                    payment.getId(),
+                    payment.getRazorpayOrderId(),
+                    payment.getAmount(),
+                    payment.getStatus().name()
+            );
+
+        } catch (com.razorpay.RazorpayException e) {
+
+            throw new RuntimeException(
+                    "Razorpay payment verification failed",
+                    e
+            );
+        }
     }
     @Override
     public List<PaymentResponseDto> getMyPayments(String email) {

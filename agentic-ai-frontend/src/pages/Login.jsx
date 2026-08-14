@@ -1,72 +1,85 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+    useState
+} from "react";
 
-import { login as loginApi } from "../services/authService";
-import { useAuth } from "../context/AuthContext";
+import {
+    Link,
+    useNavigate
+} from "react-router-dom";
+
+import {
+    login as loginApi
+} from "../services/authService";
+
+import {
+    useAuth
+} from "../context/AuthContext";
+
 
 function Login() {
 
     const navigate = useNavigate();
-    const { login } = useAuth();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const {
+        login
+    } = useAuth();
 
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [
+        email,
+        setEmail
+    ] = useState("");
 
+    const [
+        password,
+        setPassword
+    ] = useState("");
 
-    // ========================================
-    // HANDLE LOGIN
-    // ========================================
+    const [
+        error,
+        setError
+    ] = useState("");
+
+    const [
+        loading,
+        setLoading
+    ] = useState(false);
+
 
     const handleLogin = async (e) => {
 
         e.preventDefault();
 
         setError("");
+
         setLoading(true);
 
         try {
 
-            const data = await loginApi(
-                email,
-                password
-            );
+            const data =
+                await loginApi(
+                    email.trim(),
+                    password
+                );
 
-            console.log(
-                "Login Response:",
-                data
-            );
+            if (!data.accessToken) {
 
-
-            // ========================================
-            // SAVE AUTHENTICATION TOKENS
-            // ========================================
+                throw new Error(
+                    "Access token not received"
+                );
+            }
 
             login(
                 data.accessToken,
-                data.refreshToken
+                data.refreshToken,
+                data.user || null
             );
-
-
-            // ========================================
-            // SAVE EMAIL
-            // Used for cart operations
-            // ========================================
 
             localStorage.setItem(
                 "email",
-                email
+                email.trim()
             );
 
-
-            // ========================================
-            // LOGIN SUCCESSFUL
-            // ========================================
-
             navigate("/");
-
 
         } catch (error) {
 
@@ -75,25 +88,22 @@ function Login() {
                 error
             );
 
-
-            // ========================================
-            // HANDLE SERVER ERROR
-            // ========================================
-
             if (error.response) {
 
                 setError(
                     error.response.data?.message ||
-                    "Invalid email or password"
+                    "Invalid email or password."
                 );
 
             } else {
 
                 setError(
-                    "Unable to connect to server"
+                    error.message ===
+                    "Access token not received"
+                        ? "Login response did not contain an access token."
+                        : "Unable to connect to server."
                 );
             }
-
 
         } finally {
 
@@ -102,20 +112,17 @@ function Login() {
     };
 
 
-    // ========================================
-    // UI
-    // ========================================
-
     return (
+
         <div>
 
-            <h1>Login</h1>
+            <h1>
+                Login
+            </h1>
 
-            <form onSubmit={handleLogin}>
-
-                {/* =========================
-                    EMAIL
-                ========================= */}
+            <form
+                onSubmit={handleLogin}
+            >
 
                 <div>
 
@@ -127,17 +134,17 @@ function Login() {
                         type="email"
                         value={email}
                         onChange={(e) =>
-                            setEmail(e.target.value)
+                            setEmail(
+                                e.target.value
+                            )
                         }
+                        placeholder="Enter your email"
+                        autoComplete="email"
                         required
                     />
 
                 </div>
 
-
-                {/* =========================
-                    PASSWORD
-                ========================= */}
 
                 <div>
 
@@ -149,30 +156,26 @@ function Login() {
                         type="password"
                         value={password}
                         onChange={(e) =>
-                            setPassword(e.target.value)
+                            setPassword(
+                                e.target.value
+                            )
                         }
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
                         required
                     />
 
                 </div>
 
 
-                {/* =========================
-                    ERROR
-                ========================= */}
-
                 {error && (
 
-                    <p style={{ color: "red" }}>
+                    <p>
                         {error}
                     </p>
 
                 )}
 
-
-                {/* =========================
-                    LOGIN BUTTON
-                ========================= */}
 
                 <button
                     type="submit"
@@ -186,6 +189,26 @@ function Login() {
                 </button>
 
             </form>
+
+
+            <p>
+
+                Don't have an account?{" "}
+
+                <Link to="/register">
+                    Register
+                </Link>
+
+            </p>
+
+
+            <p>
+
+                <Link to="/forgot-password">
+                    Forgot Password?
+                </Link>
+
+            </p>
 
         </div>
     );
