@@ -64,8 +64,15 @@ function OrderDetails() {
 
         return (
             <div>
-                <h1>Order Details</h1>
-                <p>Loading order...</p>
+
+                <h1>
+                    Order Details
+                </h1>
+
+                <p>
+                    Loading order...
+                </p>
+
             </div>
         );
     }
@@ -80,7 +87,9 @@ function OrderDetails() {
         return (
             <div>
 
-                <h1>Order Details</h1>
+                <h1>
+                    Order Details
+                </h1>
 
                 <p>
                     {error || "Order not found."}
@@ -106,6 +115,8 @@ function OrderDetails() {
     return (
         <div className="order-details-page">
 
+            {/* BACK TO ORDERS */}
+
             <button
                 onClick={() =>
                     navigate("/orders")
@@ -115,10 +126,11 @@ function OrderDetails() {
             </button>
 
 
-            <h1>
-                Order #{order.id}
-            </h1>
+            {/* ORDER INFORMATION */}
 
+            <h1>
+                Order #{order.orderId}
+            </h1>
 
             <p>
                 Status: {order.status}
@@ -130,7 +142,12 @@ function OrderDetails() {
             </p>
 
             <p>
-                Order Date: {order.orderDate}
+                Order Date:{" "}
+                {order.orderDate
+                    ? new Date(
+                        order.orderDate
+                    ).toLocaleString()
+                    : "N/A"}
             </p>
 
 
@@ -144,32 +161,53 @@ function OrderDetails() {
 
             <div>
 
-                {order.items?.map((item) => (
+                {order.items?.length > 0 ? (
 
-                    <div
-                        key={item.id}
-                        className="order-item"
-                    >
+                    order.items.map((item) => (
 
-                        <h3>
-                            {item.productName}
-                        </h3>
+                        <div
+                            key={item.productId}
+                            className="order-item"
+                        >
 
-                        <p>
-                            Price: ₹{item.price}
-                        </p>
+                            <h3>
+                                {item.productName}
+                            </h3>
 
-                        <p>
-                            Quantity: {item.quantity}
-                        </p>
+                            <p>
+                                Product ID:{" "}
+                                {item.productId}
+                            </p>
 
-                        <p>
-                            Total: ₹{item.totalPrice}
-                        </p>
+                            <p>
+                                Price: ₹
+                                {item.price}
+                            </p>
 
-                    </div>
+                            <p>
+                                Quantity:{" "}
+                                {item.quantity}
+                            </p>
 
-                ))}
+                            <p>
+                                Item Total: ₹
+                                {(
+                                    item.price *
+                                    item.quantity
+                                ).toFixed(2)}
+                            </p>
+
+                        </div>
+
+                    ))
+
+                ) : (
+
+                    <p>
+                        No items found in this order.
+                    </p>
+
+                )}
 
             </div>
 

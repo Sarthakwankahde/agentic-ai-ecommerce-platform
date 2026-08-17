@@ -1,3 +1,6 @@
+
+// src/pages/Cart.jsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -10,6 +13,12 @@ import {
 
 import { placeOrder } from "../services/orderService";
 
+import {
+    createPaymentOrder,
+    verifyPayment
+} from "../services/paymentService";
+
+
 function Cart() {
 
     const navigate = useNavigate();
@@ -17,9 +26,13 @@ function Cart() {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [orderLoading, setOrderLoading] = useState(false);
 
-    const email = localStorage.getItem("email");
+    const [orderLoading, setOrderLoading] =
+        useState(false);
+
+    const email =
+        localStorage.getItem("email");
+
 
     // ========================================
     // LOAD CART
@@ -29,7 +42,10 @@ function Cart() {
 
         if (!email) {
 
-            setError("User email not found.");
+            setError(
+                "User email not found."
+            );
+
             setLoading(false);
 
             return;
@@ -40,7 +56,8 @@ function Cart() {
             setLoading(true);
             setError("");
 
-            const data = await getCart(email);
+            const data =
+                await getCart(email);
 
             setCartItems(data);
 
@@ -118,7 +135,9 @@ function Cart() {
     // REMOVE ITEM
     // ========================================
 
-    const handleRemove = async (cartItemId) => {
+    const handleRemove = async (
+        cartItemId
+    ) => {
 
         try {
 
@@ -176,7 +195,50 @@ function Cart() {
 
 
     // ========================================
-    // PLACE ORDER
+    // LOAD RAZORPAY SCRIPT
+    // ========================================
+
+    const loadRazorpayScript = () => {
+
+        return new Promise((resolve) => {
+
+            if (
+                document.querySelector(
+                    'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+                )
+            ) {
+
+                resolve(true);
+
+                return;
+            }
+
+
+            const script =
+                document.createElement("script");
+
+            script.src =
+                "https://checkout.razorpay.com/v1/checkout.js";
+
+            script.onload = () => {
+
+                resolve(true);
+
+            };
+
+            script.onerror = () => {
+
+                resolve(false);
+
+            };
+
+            document.body.appendChild(script);
+        });
+    };
+
+
+    // ========================================
+    // PLACE ORDER + PAYMENT
     // ========================================
 
     const handlePlaceOrder = async () => {
@@ -190,51 +252,246 @@ function Cart() {
             return;
         }
 
+
         try {
 
             setOrderLoading(true);
             setError("");
 
-            const order = await placeOrder();
+
+            // ========================================
+            // STEP 1
+            // CREATE APPLICATION ORDER
+            // ========================================
+
+            const order =
+                await placeOrder();
+
 
             console.log(
                 "Order Created:",
                 order
             );
 
-            /*
-             * IMPORTANT
-             *
-             * OrderResponseDto contains:
-             *
-             * orderId
-             *
-             * So we use:
-             *
-             * order.orderId
-             *
-             * NOT:
-             *
-             * order.id
-             */
 
-            navigate(
-                `/orders/${order.orderId}`
+            const orderId =
+                order.orderId;
+
+
+            if (!orderId) {
+
+                throw new Error(
+                    "Order ID was not returned by the server."
+                );
+            }
+
+
+            // ========================================
+            // STEP 2
+            // LOAD RAZORPAY
+            // ========================================
+
+            const razorpayLoaded =
+                await loadRazorpayScript();
+
+
+            if (!razorpayLoaded) {
+
+                throw new Error(
+                    "Razorpay SDK failed to load."
+                );
+            }
+
+
+            // ========================================
+            // STEP 3
+            // CREATE RAZORPAY ORDER
+            // ========================================
+
+            const payment =
+                await createPaymentOrder(
+                    orderId
+                );
+
+
+            console.log(
+                "Payment Order Created:",
+                payment
             );
+
+
+            // ========================================
+            // STEP 4
+            // RAZORPAY CHECKOUT
+            // ========================================
+
+            const razorpayKey =
+                import.meta.env
+                    .VITE_RAZORPAY_KEY_ID;
+
+
+            if (!razorpayKey) {
+
+                throw new Error(
+                    "Razorpay Key ID is not configured."
+                );
+            }
+
+
+            const options = {
+
+                key: razorpayKey,
+
+                amount:
+                    Math.round(
+                        Number(payment.amount) * 100
+                    ),
+
+                currency: "INR",
+
+                name:
+                    "Agentic AI E-Commerce",
+
+                description:
+                    `Payment for Order #${orderId}`,
+
+                order_id:
+                    payment.razorpayOrderId,
+
+
+                // ========================================
+                // PAYMENT SUCCESS
+                // ========================================
+
+                handler:
+                    async function (
+                        response
+                    ) {
+
+                        try {
+
+                            setOrderLoading(true);
+
+                            setError("");
+
+
+                            // ========================================
+                            // STEP 5
+                            // VERIFY PAYMENT
+                            // ========================================
+
+                            const verifiedPayment =
+                                await verifyPayment(
+
+                                    response.razorpay_order_id,
+
+                                    response.razorpay_payment_id,
+
+                                    response.razorpay_signature
+                                );
+
+
+                            console.log(
+                                "Payment Verified:",
+                                verifiedPayment
+                            );
+
+
+                            alert(
+                                "Payment successful!"
+                            );
+
+
+                            // ========================================
+                            // STEP 6
+                            // GO TO ORDER DETAILS
+                            // ========================================
+
+                            navigate(
+                                `/orders/${orderId}`
+                            );
+
+                        } catch (error) {
+
+                            console.error(
+                                "Payment verification failed:",
+                                error
+                            );
+
+                            setError(
+                                error.response?.data?.message ||
+                                error.message ||
+                                "Payment verification failed."
+                            );
+
+                        } finally {
+
+                            setOrderLoading(false);
+                        }
+                    },
+
+
+                // ========================================
+                // PREFILL USER
+                // ========================================
+
+                prefill: {
+
+                    email: email || ""
+                },
+
+
+                theme: {
+
+                    color: "#3399cc"
+                }
+            };
+
+
+            // ========================================
+            // OPEN RAZORPAY
+            // ========================================
+
+            const razorpay =
+                new window.Razorpay(
+                    options
+                );
+
+
+            razorpay.on(
+                "payment.failed",
+                function (response) {
+
+                    console.error(
+                        "Payment failed:",
+                        response.error
+                    );
+
+                    setError(
+                        response.error?.description ||
+                        "Payment failed."
+                    );
+
+                    setOrderLoading(false);
+                }
+            );
+
+
+            razorpay.open();
+
 
         } catch (error) {
 
             console.error(
-                "Failed to place order:",
+                "Failed to place order/payment:",
                 error
             );
 
             setError(
                 error.response?.data?.message ||
-                "Failed to place order."
+                error.message ||
+                "Failed to place order/payment."
             );
-
-        } finally {
 
             setOrderLoading(false);
         }
@@ -245,11 +502,15 @@ function Cart() {
     // CALCULATE CART TOTAL
     // ========================================
 
-    const cartTotal = cartItems.reduce(
-        (total, item) =>
-            total + Number(item.totalPrice || 0),
-        0
-    );
+    const cartTotal =
+        cartItems.reduce(
+            (total, item) =>
+                total +
+                Number(
+                    item.totalPrice || 0
+                ),
+            0
+        );
 
 
     // ========================================
@@ -261,7 +522,9 @@ function Cart() {
         return (
             <div>
 
-                <h1>Cart</h1>
+                <h1>
+                    Cart
+                </h1>
 
                 <p>
                     Loading cart...
@@ -277,6 +540,7 @@ function Cart() {
     // ========================================
 
     return (
+
         <div className="cart-page">
 
             <h1>
@@ -290,10 +554,13 @@ function Cart() {
 
             {error && (
 
-                <p style={{ color: "red" }}>
+                <p
+                    style={{
+                        color: "red"
+                    }}
+                >
                     {error}
                 </p>
-
             )}
 
 
@@ -311,7 +578,9 @@ function Cart() {
 
                     <button
                         onClick={() =>
-                            navigate("/products")
+                            navigate(
+                                "/products"
+                            )
                         }
                     >
                         Continue Shopping
@@ -329,98 +598,107 @@ function Cart() {
 
                     <div className="cart-items">
 
-                        {cartItems.map((item) => (
+                        {cartItems.map(
+                            (item) => (
 
-                            <div
-                                className="cart-item"
-                                key={item.cartId}
-                            >
-
-                                {/* PRODUCT IMAGE */}
-
-                                <img
-                                    src={item.imageUrl}
-                                    alt={item.productName}
-                                />
-
-
-                                {/* PRODUCT INFORMATION */}
-
-                                <div>
-
-                                    <h2>
-                                        {item.productName}
-                                    </h2>
-
-                                    <p>
-                                        Price: ₹
-                                        {item.price}
-                                    </p>
-
-                                    <p>
-                                        Total: ₹
-                                        {item.totalPrice}
-                                    </p>
-
-                                </div>
-
-
-                                {/* ========================================
-                                    QUANTITY
-                                ======================================== */}
-
-                                <div>
-
-                                    <button
-                                        onClick={() =>
-                                            handleUpdateQuantity(
-                                                item.cartId,
-                                                item.quantity - 1
-                                            )
-                                        }
-                                        disabled={
-                                            item.quantity <= 1
-                                        }
-                                    >
-                                        -
-                                    </button>
-
-                                    <span>
-                                        {" "}
-                                        {item.quantity}{" "}
-                                    </span>
-
-                                    <button
-                                        onClick={() =>
-                                            handleUpdateQuantity(
-                                                item.cartId,
-                                                item.quantity + 1
-                                            )
-                                        }
-                                    >
-                                        +
-                                    </button>
-
-                                </div>
-
-
-                                {/* ========================================
-                                    REMOVE
-                                ======================================== */}
-
-                                <button
-                                    onClick={() =>
-                                        handleRemove(
-                                            item.cartId
-                                        )
-                                    }
+                                <div
+                                    className="cart-item"
+                                    key={item.cartId}
                                 >
-                                    Remove
-                                </button>
 
-                            </div>
+                                    {/* PRODUCT IMAGE */}
 
-                        ))}
+                                    <img
+                                        src={
+                                            item.imageUrl
+                                        }
+                                        alt={
+                                            item.productName
+                                        }
+                                    />
+
+
+                                    {/* PRODUCT INFORMATION */}
+
+                                    <div>
+
+                                        <h2>
+                                            {
+                                                item.productName
+                                            }
+                                        </h2>
+
+                                        <p>
+                                            Price: ₹
+                                            {
+                                                item.price
+                                            }
+                                        </p>
+
+                                        <p>
+                                            Total: ₹
+                                            {
+                                                item.totalPrice
+                                            }
+                                        </p>
+
+                                    </div>
+
+
+                                    {/* QUANTITY */}
+
+                                    <div>
+
+                                        <button
+                                            onClick={() =>
+                                                handleUpdateQuantity(
+                                                    item.cartId,
+                                                    item.quantity - 1
+                                                )
+                                            }
+                                            disabled={
+                                                item.quantity <= 1
+                                            }
+                                        >
+                                            -
+                                        </button>
+
+                                        <span>
+                                            {" "}
+                                            {
+                                                item.quantity
+                                            }{" "}
+                                        </span>
+
+                                        <button
+                                            onClick={() =>
+                                                handleUpdateQuantity(
+                                                    item.cartId,
+                                                    item.quantity + 1
+                                                )
+                                            }
+                                        >
+                                            +
+                                        </button>
+
+                                    </div>
+
+
+                                    {/* REMOVE */}
+
+                                    <button
+                                        onClick={() =>
+                                            handleRemove(
+                                                item.cartId
+                                            )
+                                        }
+                                    >
+                                        Remove
+                                    </button>
+
+                                </div>
+                            )
+                        )}
 
                     </div>
 
@@ -440,7 +718,9 @@ function Cart() {
                         {/* CLEAR CART */}
 
                         <button
-                            onClick={handleClearCart}
+                            onClick={
+                                handleClearCart
+                            }
                         >
                             Clear Cart
                         </button>
@@ -450,7 +730,9 @@ function Cart() {
 
                         <button
                             onClick={() =>
-                                navigate("/products")
+                                navigate(
+                                    "/products"
+                                )
                             }
                         >
                             Continue Shopping
@@ -458,22 +740,25 @@ function Cart() {
 
 
                         {/* ========================================
-                            PLACE ORDER
+                            PLACE ORDER + PAYMENT
                         ======================================== */}
 
                         <button
-                            onClick={handlePlaceOrder}
-                            disabled={orderLoading}
+                            onClick={
+                                handlePlaceOrder
+                            }
+                            disabled={
+                                orderLoading
+                            }
                         >
                             {orderLoading
-                                ? "Placing Order..."
-                                : "Place Order"}
+                                ? "Processing Payment..."
+                                : "Place Order & Pay"}
                         </button>
 
                     </div>
 
                 </>
-
             )}
 
         </div>

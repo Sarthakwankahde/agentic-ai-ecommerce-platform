@@ -1,3 +1,4 @@
+
 import {
     Routes,
     Route
@@ -8,6 +9,7 @@ import Navbar from "../components/Navbar";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import ForgotPassword from "../pages/ForgotPassword";
 
 import Products from "../pages/Products";
 import ProductDetails from "../pages/ProductDetails";
@@ -52,6 +54,11 @@ function AppRoutes() {
                 <Route
                     path="/register"
                     element={<Register />}
+                />
+
+                <Route
+                    path="/forgot-password"
+                    element={<ForgotPassword />}
                 />
 
                 <Route
@@ -128,6 +135,7 @@ function AppRoutes() {
             </Routes>
 
         </>
+
     );
 }
 
