@@ -1,3 +1,4 @@
+// src/routes/AppRoutes.jsx
 
 import {
     Routes,
@@ -22,9 +23,9 @@ import OrderDetails from "../pages/OrderDetails";
 
 import Profile from "../pages/Profile";
 import Address from "../pages/Address";
+import Checkout from "../pages/Checkout";
 
-import ProtectedRoute
-    from "./ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 
 
 function AppRoutes() {
@@ -38,7 +39,7 @@ function AppRoutes() {
             <Routes>
 
                 {/* =========================
-                    PUBLIC
+                    PUBLIC ROUTES
                 ========================= */}
 
                 <Route
@@ -75,7 +76,7 @@ function AppRoutes() {
 
 
                 {/* =========================
-                    PROTECTED
+                    PROTECTED ROUTES
                 ========================= */}
 
                 <Route
@@ -84,20 +85,39 @@ function AppRoutes() {
                     }
                 >
 
+                    {/* CART */}
+
                     <Route
                         path="/cart"
                         element={<Cart />}
                     />
+
+
+                    {/* CHECKOUT */}
+
+                    <Route
+                        path="/checkout"
+                        element={<Checkout />}
+                    />
+
+
+                    {/* WISHLIST */}
 
                     <Route
                         path="/wishlist"
                         element={<Wishlist />}
                     />
 
+
+                    {/* ORDERS */}
+
                     <Route
                         path="/orders"
                         element={<Orders />}
                     />
+
+
+                    {/* ORDER DETAILS */}
 
                     <Route
                         path="/orders/:orderId"
@@ -106,10 +126,16 @@ function AppRoutes() {
                         }
                     />
 
+
+                    {/* PROFILE */}
+
                     <Route
                         path="/profile"
                         element={<Profile />}
                     />
+
+
+                    {/* ADDRESSES */}
 
                     <Route
                         path="/addresses"

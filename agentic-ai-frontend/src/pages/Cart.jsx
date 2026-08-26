@@ -1,4 +1,3 @@
-
 // src/pages/Cart.jsx
 
 import { useEffect, useState } from "react";
@@ -322,7 +321,7 @@ function Cart() {
 
             // ========================================
             // STEP 4
-            // RAZORPAY CHECKOUT
+            // RAZORPAY KEY
             // ========================================
 
             const razorpayKey =
@@ -337,6 +336,10 @@ function Cart() {
                 );
             }
 
+
+            // ========================================
+            // RAZORPAY CHECKOUT OPTIONS
+            // ========================================
 
             const options = {
 
@@ -356,7 +359,7 @@ function Cart() {
                     `Payment for Order #${orderId}`,
 
                 order_id:
-                    payment.razorpayOrderId,
+                payment.razorpayOrderId,
 
 
                 // ========================================
@@ -364,9 +367,7 @@ function Cart() {
                 // ========================================
 
                 handler:
-                    async function (
-                        response
-                    ) {
+                    async function (response) {
 
                         try {
 
@@ -441,6 +442,10 @@ function Cart() {
                 },
 
 
+                // ========================================
+                // RAZORPAY THEME
+                // ========================================
+
                 theme: {
 
                     color: "#3399cc"
@@ -449,7 +454,7 @@ function Cart() {
 
 
             // ========================================
-            // OPEN RAZORPAY
+            // CREATE RAZORPAY INSTANCE
             // ========================================
 
             const razorpay =
@@ -457,6 +462,10 @@ function Cart() {
                     options
                 );
 
+
+            // ========================================
+            // PAYMENT FAILED
+            // ========================================
 
             razorpay.on(
                 "payment.failed",
@@ -476,6 +485,10 @@ function Cart() {
                 }
             );
 
+
+            // ========================================
+            // OPEN RAZORPAY
+            // ========================================
 
             razorpay.open();
 
@@ -561,6 +574,7 @@ function Cart() {
                 >
                     {error}
                 </p>
+
             )}
 
 
@@ -578,9 +592,7 @@ function Cart() {
 
                     <button
                         onClick={() =>
-                            navigate(
-                                "/products"
-                            )
+                            navigate("/products")
                         }
                     >
                         Continue Shopping
@@ -697,6 +709,7 @@ function Cart() {
                                     </button>
 
                                 </div>
+
                             )
                         )}
 
@@ -711,16 +724,14 @@ function Cart() {
 
                         <h2>
                             Cart Total: ₹
-                            {cartTotal}
+                            {cartTotal.toFixed(2)}
                         </h2>
 
 
                         {/* CLEAR CART */}
 
                         <button
-                            onClick={
-                                handleClearCart
-                            }
+                            onClick={handleClearCart}
                         >
                             Clear Cart
                         </button>
@@ -730,18 +741,25 @@ function Cart() {
 
                         <button
                             onClick={() =>
-                                navigate(
-                                    "/products"
-                                )
+                                navigate("/products")
                             }
                         >
                             Continue Shopping
                         </button>
 
 
-                        {/* ========================================
-                            PLACE ORDER + PAYMENT
-                        ======================================== */}
+                        {/* PROCEED TO CHECKOUT */}
+
+                        <button
+                            onClick={() =>
+                                navigate("/checkout")
+                            }
+                        >
+                            Proceed to Checkout
+                        </button>
+
+
+                        {/* PLACE ORDER + PAYMENT */}
 
                         <button
                             onClick={
@@ -759,6 +777,7 @@ function Cart() {
                     </div>
 
                 </>
+
             )}
 
         </div>

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import {
@@ -8,22 +9,30 @@ import {
     setDefaultAddress
 } from "../services/addressService";
 
+
 function Address() {
 
     const email = localStorage.getItem("email");
 
+    // ========================================
+    // STATE
+    // ========================================
+
     const [addresses, setAddresses] = useState([]);
 
-    const [editingId, setEditingId] = useState(null);
+    const [loading, setLoading] =
+        useState(true);
 
-    const [loading, setLoading] = useState(true);
+    const [error, setError] =
+        useState("");
 
-    const [message, setMessage] = useState("");
+    const [message, setMessage] =
+        useState("");
 
-    const [error, setError] = useState("");
+    const [editingAddressId, setEditingAddressId] =
+        useState(null);
 
     const [form, setForm] = useState({
-
         fullName: "",
         mobileNumber: "",
         addressLine1: "",
@@ -32,7 +41,6 @@ function Address() {
         state: "",
         country: "",
         pincode: ""
-
     });
 
 
@@ -71,6 +79,7 @@ function Address() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to load addresses."
             );
 
@@ -102,11 +111,8 @@ function Address() {
             event.target;
 
         setForm((previous) => ({
-
             ...previous,
-
             [name]: value
-
         }));
     };
 
@@ -118,7 +124,6 @@ function Address() {
     const resetForm = () => {
 
         setForm({
-
             fullName: "",
             mobileNumber: "",
             addressLine1: "",
@@ -127,15 +132,14 @@ function Address() {
             state: "",
             country: "",
             pincode: ""
-
         });
 
-        setEditingId(null);
+        setEditingAddressId(null);
     };
 
 
     // ========================================
-    // SUBMIT ADDRESS
+    // ADD / UPDATE ADDRESS
     // ========================================
 
     const handleSubmit = async (event) => {
@@ -147,10 +151,10 @@ function Address() {
             setError("");
             setMessage("");
 
-            if (editingId) {
+            if (editingAddressId) {
 
                 await updateAddress(
-                    editingId,
+                    editingAddressId,
                     email,
                     form
                 );
@@ -183,7 +187,7 @@ function Address() {
             );
 
             setError(
-                error.response?.data ||
+                error.response?.data?.message ||
                 "Failed to save address."
             );
         }
@@ -196,30 +200,38 @@ function Address() {
 
     const handleEdit = (address) => {
 
-        setEditingId(address.id);
+        setEditingAddressId(
+            address.id
+        );
 
         setForm({
-
-            fullName: address.fullName,
+            fullName:
+                address.fullName || "",
 
             mobileNumber:
-            address.mobileNumber,
+                address.mobileNumber || "",
 
             addressLine1:
-            address.addressLine1,
+                address.addressLine1 || "",
 
             addressLine2:
                 address.addressLine2 || "",
 
-            city: address.city,
+            city:
+                address.city || "",
 
-            state: address.state,
+            state:
+                address.state || "",
 
-            country: address.country,
+            country:
+                address.country || "",
 
-            pincode: address.pincode
-
+            pincode:
+                address.pincode || ""
         });
+
+        setMessage("");
+        setError("");
 
         window.scrollTo({
             top: 0,
@@ -267,6 +279,7 @@ function Address() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to delete address."
             );
         }
@@ -274,7 +287,7 @@ function Address() {
 
 
     // ========================================
-    // SET DEFAULT
+    // SET DEFAULT ADDRESS
     // ========================================
 
     const handleSetDefault = async (addressId) => {
@@ -303,6 +316,7 @@ function Address() {
             );
 
             setError(
+                error.response?.data?.message ||
                 "Failed to set default address."
             );
         }
@@ -318,7 +332,9 @@ function Address() {
         return (
             <div>
 
-                <h1>My Addresses</h1>
+                <h1>
+                    My Addresses
+                </h1>
 
                 <p>
                     Loading addresses...
@@ -342,17 +358,29 @@ function Address() {
             </h1>
 
 
-            {error && (
-                <p>
-                    {error}
+            {/* ========================================
+                SUCCESS MESSAGE
+            ======================================== */}
+
+            {message && (
+
+                <p style={{ color: "green" }}>
+                    {message}
                 </p>
+
             )}
 
 
-            {message && (
-                <p>
-                    {message}
+            {/* ========================================
+                ERROR MESSAGE
+            ======================================== */}
+
+            {error && (
+
+                <p style={{ color: "red" }}>
+                    {error}
                 </p>
+
             )}
 
 
@@ -360,17 +388,20 @@ function Address() {
                 ADD / UPDATE ADDRESS FORM
             ======================================== */}
 
-            <div>
+            <div className="address-form-section">
 
                 <h2>
-                    {editingId
+                    {editingAddressId
                         ? "Update Address"
                         : "Add New Address"}
                 </h2>
 
+
                 <form
                     onSubmit={handleSubmit}
                 >
+
+                    {/* FULL NAME */}
 
                     <div>
 
@@ -383,11 +414,14 @@ function Address() {
                             name="fullName"
                             value={form.fullName}
                             onChange={handleChange}
+                            placeholder="Enter full name"
                             required
                         />
 
                     </div>
 
+
+                    {/* MOBILE NUMBER */}
 
                     <div>
 
@@ -396,17 +430,18 @@ function Address() {
                         </label>
 
                         <input
-                            type="text"
+                            type="tel"
                             name="mobileNumber"
-                            value={
-                                form.mobileNumber
-                            }
+                            value={form.mobileNumber}
                             onChange={handleChange}
+                            placeholder="Enter mobile number"
                             required
                         />
 
                     </div>
 
+
+                    {/* ADDRESS LINE 1 */}
 
                     <div>
 
@@ -417,15 +452,16 @@ function Address() {
                         <input
                             type="text"
                             name="addressLine1"
-                            value={
-                                form.addressLine1
-                            }
+                            value={form.addressLine1}
                             onChange={handleChange}
+                            placeholder="House / Flat / Street"
                             required
                         />
 
                     </div>
 
+
+                    {/* ADDRESS LINE 2 */}
 
                     <div>
 
@@ -436,14 +472,15 @@ function Address() {
                         <input
                             type="text"
                             name="addressLine2"
-                            value={
-                                form.addressLine2
-                            }
+                            value={form.addressLine2}
                             onChange={handleChange}
+                            placeholder="Apartment / Landmark"
                         />
 
                     </div>
 
+
+                    {/* CITY */}
 
                     <div>
 
@@ -456,11 +493,14 @@ function Address() {
                             name="city"
                             value={form.city}
                             onChange={handleChange}
+                            placeholder="Enter city"
                             required
                         />
 
                     </div>
 
+
+                    {/* STATE */}
 
                     <div>
 
@@ -473,11 +513,14 @@ function Address() {
                             name="state"
                             value={form.state}
                             onChange={handleChange}
+                            placeholder="Enter state"
                             required
                         />
 
                     </div>
 
+
+                    {/* COUNTRY */}
 
                     <div>
 
@@ -490,11 +533,14 @@ function Address() {
                             name="country"
                             value={form.country}
                             onChange={handleChange}
+                            placeholder="Enter country"
                             required
                         />
 
                     </div>
 
+
+                    {/* PINCODE */}
 
                     <div>
 
@@ -507,22 +553,25 @@ function Address() {
                             name="pincode"
                             value={form.pincode}
                             onChange={handleChange}
+                            placeholder="Enter pincode"
                             required
                         />
 
                     </div>
 
 
+                    {/* BUTTONS */}
+
                     <button type="submit">
 
-                        {editingId
+                        {editingAddressId
                             ? "Update Address"
                             : "Add Address"}
 
                     </button>
 
 
-                    {editingId && (
+                    {editingAddressId && (
 
                         <button
                             type="button"
@@ -539,10 +588,10 @@ function Address() {
 
 
             {/* ========================================
-                ADDRESS LIST
+                SAVED ADDRESSES
             ======================================== */}
 
-            <div>
+            <div className="saved-addresses">
 
                 <h2>
                     Saved Addresses
@@ -552,102 +601,120 @@ function Address() {
                 {addresses.length === 0 ? (
 
                     <p>
-                        No addresses found.
+                        No addresses saved yet.
                     </p>
 
                 ) : (
 
-                    addresses.map((address) => (
+                    <div>
 
-                        <div
-                            key={address.id}
-                            className="address-card"
-                        >
+                        {addresses.map(
+                            (address) => (
 
-                            <h3>
-                                {address.fullName}
-                            </h3>
-
-                            <p>
-                                Mobile:{" "}
-                                {address.mobileNumber}
-                            </p>
-
-                            <p>
-                                {address.addressLine1}
-                            </p>
-
-                            {address.addressLine2 && (
-
-                                <p>
-                                    {address.addressLine2}
-                                </p>
-
-                            )}
-
-                            <p>
-                                {address.city},{" "}
-                                {address.state}
-                            </p>
-
-                            <p>
-                                {address.country} -{" "}
-                                {address.pincode}
-                            </p>
-
-
-                            {address.isDefault && (
-
-                                <strong>
-                                    Default Address
-                                </strong>
-
-                            )}
-
-
-                            <div>
-
-                                <button
-                                    onClick={() =>
-                                        handleEdit(
-                                            address
-                                        )
-                                    }
+                                <div
+                                    key={address.id}
+                                    className="address-card"
                                 >
-                                    Edit
-                                </button>
+
+                                    {/* DEFAULT */}
+
+                                    {address.isDefault && (
+
+                                        <strong>
+                                            Default Address
+                                        </strong>
+
+                                    )}
 
 
-                                <button
-                                    onClick={() =>
-                                        handleDelete(
-                                            address.id
-                                        )
-                                    }
-                                >
-                                    Delete
-                                </button>
+                                    <h3>
+                                        {address.fullName}
+                                    </h3>
 
 
-                                {!address.isDefault && (
+                                    <p>
+                                        Mobile:{" "}
+                                        {address.mobileNumber}
+                                    </p>
+
+
+                                    <p>
+                                        {address.addressLine1}
+                                    </p>
+
+
+                                    {address.addressLine2 && (
+
+                                        <p>
+                                            {address.addressLine2}
+                                        </p>
+
+                                    )}
+
+
+                                    <p>
+                                        {address.city},{" "}
+                                        {address.state}
+                                    </p>
+
+
+                                    <p>
+                                        {address.country} -{" "}
+                                        {address.pincode}
+                                    </p>
+
+
+                                    {/* EDIT */}
 
                                     <button
+                                        type="button"
                                         onClick={() =>
-                                            handleSetDefault(
+                                            handleEdit(
+                                                address
+                                            )
+                                        }
+                                    >
+                                        Edit
+                                    </button>
+
+
+                                    {/* DELETE */}
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleDelete(
                                                 address.id
                                             )
                                         }
                                     >
-                                        Set as Default
+                                        Delete
                                     </button>
 
-                                )}
 
-                            </div>
+                                    {/* DEFAULT */}
 
-                        </div>
+                                    {!address.isDefault && (
 
-                    ))
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleSetDefault(
+                                                    address.id
+                                                )
+                                            }
+                                        >
+                                            Set as Default
+                                        </button>
+
+                                    )}
+
+                                </div>
+
+                            )
+                        )}
+
+                    </div>
 
                 )}
 
