@@ -49,7 +49,10 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of(
+                        "http://localhost:5173",
+                        "https://sarthak-portfolio-zeta.vercel.app"
+                )
         );
 
         configuration.setAllowedMethods(
