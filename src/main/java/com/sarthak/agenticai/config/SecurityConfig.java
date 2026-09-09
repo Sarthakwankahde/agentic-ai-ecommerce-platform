@@ -1,8 +1,9 @@
-package com.sarthak.agenticai.config;
+ package com.sarthak.agenticai.config;
 
 import com.sarthak.agenticai.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -95,11 +96,29 @@ public class SecurityConfig {
 
         http
 
+                // ========================================
+                // CSRF
+                // ========================================
+
                 .csrf(csrf ->
                         csrf.disable()
                 )
 
-                .cors(cors -> {})
+
+                // ========================================
+                // CORS
+                // ========================================
+
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
+
+
+                // ========================================
+                // SESSION MANAGEMENT
+                // ========================================
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -107,11 +126,27 @@ public class SecurityConfig {
                         )
                 )
 
+
+                // ========================================
+                // AUTHORIZATION
+                // ========================================
+
                 .authorizeHttpRequests(auth -> auth
 
-                        // ================================
+                        // ========================================
+                        // CORS PREFLIGHT REQUESTS
+                        // ========================================
+
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        )
+                        .permitAll()
+
+
+                        // ========================================
                         // PUBLIC APIs
-                        // ================================
+                        // ========================================
 
                         .requestMatchers(
                                 "/api/v1/users/register",
@@ -123,9 +158,9 @@ public class SecurityConfig {
                         .permitAll()
 
 
-                        // ================================
+                        // ========================================
                         // ADMIN APIs
-                        // ================================
+                        // ========================================
 
                         .requestMatchers(
                                 "/api/v1/admin/**"
@@ -133,9 +168,9 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
 
 
-                        // ================================
+                        // ========================================
                         // USER APIs
-                        // ================================
+                        // ========================================
 
                         .requestMatchers(
                                 "/api/v1/user/**"
@@ -143,9 +178,9 @@ public class SecurityConfig {
                         .hasRole("USER")
 
 
-                        // ================================
+                        // ========================================
                         // AI APIs
-                        // ================================
+                        // ========================================
 
                         .requestMatchers(
                                 "/api/v1/ai/**"
@@ -156,18 +191,28 @@ public class SecurityConfig {
                         )
 
 
-                        // ================================
+                        // ========================================
                         // EVERYTHING ELSE
-                        // ================================
+                        // ========================================
 
                         .anyRequest()
                         .authenticated()
                 )
 
+
+                // ========================================
+                // JWT FILTER
+                // ========================================
+
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
+
+
+                // ========================================
+                // HTTP BASIC
+                // ========================================
 
                 .httpBasic(
                         Customizer.withDefaults()
